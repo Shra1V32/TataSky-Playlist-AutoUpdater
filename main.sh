@@ -1,9 +1,10 @@
 #!/bin/bash
-curl -s -m 1 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 1; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+tput setaf 6; curl -s -m 1 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 1; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 printf "\n-- Tata Sky Playlist Auto-Updater --"
 printf "\nAuthor: Nageshwar128\n"
 echo "GitHub Profile: https://github.com/Nageshwar128"
 echo "------------------------------------------------------"
+tput init;
 echo "Enter the required details below: "
 echo " "
 read -p " Enter your Tata Sky Subscriber ID: " sub_id;
@@ -65,3 +66,4 @@ git push >> /dev/null 2>&1
 tput setaf 3; echo "Done creating your new repo. " && printf "Check your new private repo here: https://github.com/$git_id/TataSkyIPTV-Daily\n"
 tput setaf 2; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
 tput setaf 2; echo "Github Profile: https://github.com/Nageshwar128"
+tput setaf init;

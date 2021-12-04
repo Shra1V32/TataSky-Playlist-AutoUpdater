@@ -1,6 +1,3 @@
 #!/bin/bash
-pkg install gh -y
-pkg install expect -y
-pkg install python3 -y
-pkg install ncurses-utils -y
+pkg install gh ncurses-utils expect python3 -y
 pip install requests
