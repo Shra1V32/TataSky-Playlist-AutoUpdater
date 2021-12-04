@@ -4,7 +4,7 @@ printf "\n-- Tata Sky Playlist Auto-Updater --"
 printf "\nAuthor: Nageshwar128\n"
 echo "GitHub Profile: https://github.com/Nageshwar128"
 echo "------------------------------------------------------"
-tput init;
+tput sgr0
 echo "Enter the required details below: "
 echo " "
 read -p " Enter your Tata Sky Subscriber ID: " sub_id;
