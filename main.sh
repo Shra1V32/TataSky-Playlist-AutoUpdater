@@ -1,10 +1,27 @@
 #!/bin/bash
+LOCALDIR=$(pwd)
+RED='\033[0;31m'
+NC='\033[0m'
+
+if [ $OSTYPE == 'linux-gnu' ]; then
+packages='curl gh expect python3 ncurses-bin'
+for package in $packages; do
+dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
+done
+
+elif [ $OSTYPE == 'linux-android' ]; then
+packages='curl gh expect python3 ncurses-utils gettext'
+for package in $packages; do
+dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
+done
+fi
+
 tput setaf 6; curl -s -m 1 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 1; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 printf "\n-- Tata Sky Playlist Auto-Updater --"
 printf "\nAuthor: Nageshwar128\n"
 echo "GitHub Profile: https://github.com/Nageshwar128"
 echo "------------------------------------------------------"
-tput sgr0
+tput sgr0;
 echo "Enter the required details below: "
 echo " "
 read -p " Enter your Tata Sky Subscriber ID: " sub_id;
@@ -13,7 +30,6 @@ read -p " Enter your Tata Sky Password: " tata_pass;
 read -p " Enter your GitHub Email Address: " git_mail;
 read -p " Enter your GitHub ID: " git_id;
 read -p " Enter your GitHub Token: " git_token;
-rm -rf Tata-Sky-IPTV
 git config --global user.name "$git_id"
 git config --global user.email "$git_mail"
 git clone https://github.com/ForceGT/Tata-Sky-IPTV
@@ -62,8 +78,10 @@ git clone ${gist_url} >> /dev/null 2>&1
 cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.m3u .
 git add .
 git commit -m "Initial Playlist Upload"
-git push >> /dev/null 2>&1
+git push >> /dev/null 2>&1 || { tput setaf 1; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
 tput setaf 3; echo "Done creating your new repo. " && printf "Check your new private repo here: https://github.com/$git_id/TataSkyIPTV-Daily\n"
 tput setaf 2; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
 tput setaf 2; echo "Github Profile: https://github.com/Nageshwar128"
+rm -rf $LOCALDIR/Tata-Sky-IPTV
+sleep 3;
 tput setaf init;
