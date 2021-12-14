@@ -25,12 +25,12 @@ pkg install git
 ```
 * Now, do:
 ```bash
-git clone https://github.com/Nageshwar128/TataSky-Playlist-Updater
+git clone https://github.com/Nageshwar128/TataSky-Playlist-AutoUpdater
 ```
 
 * To make setup, Do:
 ```bash
-cd TataSky-Playlist-Updater/
+cd TataSky-Playlist-AutoUpdater/
 ./setup.sh
 ```
 ## How to use?
@@ -69,6 +69,7 @@ The tokens, GitHub email and ID are required because we are basically creating a
 
 * [Gaurav Thakkar](https://github.com/ForceGT) for his [IPTV Repo](https://github.com/ForceGT/Tata-Sky-IPTV)
 * GitHub for their GitHub Actions
+* Manohar Kumar for continuos testing
 
 
 
