@@ -10,7 +10,7 @@ dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed
 done
 
 elif [ $OSTYPE == 'linux-android' ]; then
-packages='curl gh expect python3 ncurses-utils gettext'
+packages='curl gh expect python ncurses-utils gettext'
 for package in $packages; do
 dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
 done
@@ -34,7 +34,7 @@ git config --global user.name "$git_id"
 git config --global user.email "$git_mail"
 git clone https://github.com/ForceGT/Tata-Sky-IPTV
 cd Tata-Sky-IPTV/code_samples/
-wget https://gist.githubusercontent.com/Nageshwar128/25e2fcd571fcb9466c3d95b35ba36fa3/raw/script.exp >> /dev/null 2>&1
+curl -s 'https://gist.githubusercontent.com/Nageshwar128/25e2fcd571fcb9466c3d95b35ba36fa3/raw/script.exp' > script.exp
 chmod 755 script.exp
 pass=$(echo "$tata_pass" | sed 's#\$#\\\\$#g' )
 sed -i "s/PASSWORD/$pass/g" script.exp
@@ -42,7 +42,7 @@ sed -i "s/SUB_ID/$sub_id/g" script.exp
 sed -i "s/MOB_NO/$tata_mobile/g" script.exp
 ./script.exp || { echo "Something went wrong."; exit 1; }
 rm script.exp
-wget https://gist.githubusercontent.com/Nageshwar128/a334ac6d6404045b1c23eaa583e93458/raw/script.exp >> /dev/null 2>&1
+curl -s 'https://gist.githubusercontent.com/Nageshwar128/a334ac6d6404045b1c23eaa583e93458/raw/script.exp' > script.exp
 chmod 755 script.exp
 echo "$git_token" >> mytoken.txt
 gh auth login --with-token < mytoken.txt
@@ -56,8 +56,8 @@ dir="${gist_url##*/}"
 rm allChannelPlaylist.m3u gist_link.txt
 gh repo create TataSkyIPTV-Daily --private -y || echo "New repo has been created"
 mkdir -p .github/workflows && cd .github/workflows
-wget https://gist.githubusercontent.com/Nageshwar128/9bb06a83b4fb55d744a0099cf34e8b5d/raw/TataSkyDailyWorkflow.yml >> /dev/null 2>&1
-wget https://gist.githubusercontent.com/Nageshwar128/469d24f4739c64542c7c4fa074dc95bf/raw/substitute.txt >> /dev/null 2>&1
+curl -s 'https://gist.githubusercontent.com/Nageshwar128/9bb06a83b4fb55d744a0099cf34e8b5d/raw/TataSkyDailyWorkflow.yml' > TataSkyDailyWorkflow.yml
+curl -s 'https://gist.githubusercontent.com/Nageshwar128/469d24f4739c64542c7c4fa074dc95bf/raw/substitute.txt' > substitute.txt
 export dir=$dir
 export gist_url=$gist_url
 export git_id=$git_id

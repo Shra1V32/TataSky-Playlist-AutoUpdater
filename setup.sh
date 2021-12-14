@@ -9,6 +9,6 @@ sudo apt install gh
 fi
 
 if [ $OSTYPE == 'linux-android' ]; then
-pkg install gh ncurses-utils expect python3 gettext -y
+pkg install gh ncurses-utils expect python gettext -y
 pip install requests
 fi
