@@ -16,7 +16,7 @@ dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed
 done
 fi
 
-tput setaf 6; curl -s -m 1 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 1; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+tput setaf 6; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 printf "\n-- Tata Sky Playlist Auto-Updater --"
 printf "\nAuthor: Nageshwar128\n"
 echo "GitHub Profile: https://github.com/Nageshwar128"
@@ -78,10 +78,14 @@ git clone ${gist_url} >> /dev/null 2>&1
 cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.m3u .
 git add .
 git commit -m "Initial Playlist Upload"
-git push >> /dev/null 2>&1 || { tput setaf 1; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
-tput setaf 3; echo "Done creating your new repo. " && printf "Check your new private repo here: https://github.com/$git_id/TataSkyIPTV-Daily\n"
+git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
+playlist_url=(echo "$gist_url/raw/allChannelPlaylist.m3u")
+tput setaf 220; echo "Successfully created your new private repo." && printf "Check your new private repo here: https://github.com/$git_id/TataSkyIPTV-Daily\n" && printf "Check Your Playlist URL here: $playlist_url \nYou can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
+tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
+tput setaf 220; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
 tput setaf 2; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
 tput setaf 2; echo "Github Profile: https://github.com/Nageshwar128"
+echo " " && echo " "
 rm -rf $LOCALDIR/Tata-Sky-IPTV
 sleep 3;
 tput setaf init;
