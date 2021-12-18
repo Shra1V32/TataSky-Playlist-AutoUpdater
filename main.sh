@@ -79,8 +79,7 @@ cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.
 git add .
 git commit -m "Initial Playlist Upload"
 git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
-playlist_url=(echo "$gist_url/raw/allChannelPlaylist.m3u")
-tput setaf 220; echo "Successfully created your new private repo." && printf "Check your new private repo here: https://github.com/$git_id/TataSkyIPTV-Daily\n" && printf "Check Your Playlist URL here: $playlist_url \nYou can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
+tput setaf 220; echo "Successfully created your new private repo." && printf "Check your new private repo here: https://github.com/$git_id/TataSkyIPTV-Daily\n" && printf "Check Your Playlist URL here: https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \nYou can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
 tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
 tput setaf 220; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
 tput setaf 2; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
