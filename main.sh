@@ -1,15 +1,15 @@
-#!/bin/bash
+#!/bin/bash -e
 LOCALDIR=$(pwd)
 RED='\033[0;31m'
 NC='\033[0m'
 
-if [ $OSTYPE == 'linux-gnu' ]; then
+if [[ $OSTYPE == 'linux-gnu'* ]]; then
 packages='curl gh expect python3 ncurses-bin'
 for package in $packages; do
 dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
 done
 
-elif [ $OSTYPE == 'linux-android' ]; then
+elif [[ $OSTYPE == 'linux-android'* ]]; then
 packages='curl gh expect python ncurses-utils gettext'
 for package in $packages; do
 dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
@@ -32,7 +32,7 @@ read -p " Enter your GitHub ID: " git_id;
 read -p " Enter your GitHub Token: " git_token;
 git config --global user.name "$git_id"
 git config --global user.email "$git_mail"
-git clone https://github.com/ForceGT/Tata-Sky-IPTV
+git clone https://github.com/ForceGT/Tata-Sky-IPTV || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
 cd Tata-Sky-IPTV/code_samples/
 curl -s 'https://gist.githubusercontent.com/Nageshwar128/25e2fcd571fcb9466c3d95b35ba36fa3/raw/script.exp' > script.exp
 chmod 755 script.exp
@@ -73,18 +73,19 @@ git remote add origin https://$git_token@github.com/$git_id/TataSkyIPTV-Daily
 git branch -M main default || git branch -M main
 git add .
 git commit --author="Nageshwar128<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
-git push --set-upstream origin main || { echo "Force pushing..."; git push -f --set-upstream origin main; }
+git push --set-upstream origin main || { echo "Normal push failed, Trying to Force Push..."; git push -f --set-upstream origin main; }
 git clone ${gist_url} >> /dev/null 2>&1
 cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.m3u .
 git add .
 git commit -m "Initial Playlist Upload"
 git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
-tput setaf 220; echo "Successfully created your new private repo." && printf "Check your new private repo here: https://github.com/$git_id/TataSkyIPTV-Daily\n" && printf "Check Your Playlist URL here: https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \nYou can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
+tput setaf 27; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 27; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n" && tput setaf 27; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
 tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
-tput setaf 220; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
+tput setaf 27; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
 tput setaf 2; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
-tput setaf 2; echo "Github Profile: https://github.com/Nageshwar128"
+tput setaf 2; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
+tput setaf 2; echo "My Github Profile: https://github.com/Nageshwar128"
 echo " " && echo " "
 rm -rf $LOCALDIR/Tata-Sky-IPTV
-sleep 3;
+echo "Press Enter to exit."; read junk;
 tput setaf init;
