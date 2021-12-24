@@ -17,26 +17,10 @@
 * Termux App from F-Droid (Mobile)
 * Windows Subsystem for Linux (Google it if you want to know how to install Linux Subsystem on Windows)
 
-## How to Setup?
-
-* First of all, If you're using Termux then run: (Linux users can skip this step.)
-```bash
-pkg install git
-```
-* Now, do:
-```bash
-git clone https://github.com/Nageshwar128/TataSky-Playlist-AutoUpdater
-```
-
-* To make setup, Do:
-```bash
-cd TataSky-Playlist-AutoUpdater/
-./setup.sh
-```
 ## How to use?
-* After executing setup.sh file, Do the following:
+* Copy the below script and paste it in the terminal:
 ```bash
-./main.sh
+curl -s 'https://raw.githubusercontent.com/Nageshwar128/TataSky-Playlist-AutoUpdater/main/setup.sh' | bash; git clone https://github.com/Nageshwar128/TataSky-Playlist-AutoUpdater; cd TataSky-Playlist-AutoUpdater; bash ./main.sh;
 ```
 * Now, Enter the required details asked there.
 * Please wait until the script does the job for you.
