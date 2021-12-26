@@ -19,7 +19,7 @@ done
 clear
 tput setaf 6; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 else
-echo -e "${RED}Platform not supported. Exiting...${NC}" && exit 1;
+echo -e "${RED}Platform not supported, Exiting...${NC}"; exit 1;
 fi
 
 printf "\n-- Tata Sky Playlist Auto-Updater --"
@@ -33,7 +33,7 @@ read -p " Enter your Tata Sky Subscriber ID: " sub_id;
 read -p " Enter your Tata Sky Mobile Number: " tata_mobile;
 read -p " Enter your Tata Sky Password: " tata_pass;
 read -p " Enter your GitHub Email Address: " git_mail;
-read -p " Enter your GitHub ID: " git_id;
+read -p " Enter your GitHub Username: " git_id;
 read -p " Enter your GitHub Token: " git_token;
 git config --global user.name "$git_id"
 git config --global user.email "$git_mail"
@@ -74,7 +74,7 @@ cd ../..
 rm .gitignore
 echo "code_samples/__pycache__" > .gitignore && echo "allChannelPlaylist.m3u" >> .gitignore && echo "userSubscribedChannels.json" >> .gitignore
 git remote remove origin
-git remote add origin https://$git_token@github.com/$git_id/TataSkyIPTV-Daily
+git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git"
 git branch -M main default || git branch -M main
 git add .
 git commit --author="Nageshwar128<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
