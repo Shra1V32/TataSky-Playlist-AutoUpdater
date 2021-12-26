@@ -18,6 +18,8 @@ dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed
 done
 clear
 tput setaf 6; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+else
+echo -e "${RED}Platform not supported. Exiting...${NC}" && exit 1;
 fi
 
 printf "\n-- Tata Sky Playlist Auto-Updater --"
