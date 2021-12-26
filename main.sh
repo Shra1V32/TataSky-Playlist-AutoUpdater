@@ -4,19 +4,22 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 if [[ $OSTYPE == 'linux-gnu'* ]]; then
-packages='curl gh expect python3 ncurses-bin'
+packages='curl gh expect python3 python3-pip ncurses-bin'
 for package in $packages; do
 dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
 done
+clear
+tput setaf 6; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 
 elif [[ $OSTYPE == 'linux-android'* ]]; then
 packages='curl gh expect python ncurses-utils gettext'
 for package in $packages; do
 dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
 done
+clear
+tput setaf 6; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 fi
 
-tput setaf 6; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 printf "\n-- Tata Sky Playlist Auto-Updater --"
 printf "\nAuthor: Nageshwar128\n"
 echo "GitHub Profile: https://github.com/Nageshwar128"
