@@ -3,29 +3,12 @@ LOCALDIR=$(pwd)
 RED='\033[0;31m'
 NC='\033[0m'
 
-if [[ $OSTYPE == 'linux-gnu'* ]]; then
-packages='curl gh expect python3 python3-pip ncurses-bin'
-for package in $packages; do
-dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
-done
-clear
-tput setaf 6; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
-
-elif [[ $OSTYPE == 'linux-android'* ]]; then
-packages='curl gh expect python ncurses-utils gettext'
-for package in $packages; do
-dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
-done
-clear
-tput setaf 6; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
-else
-echo -e "${RED}Platform not supported, Exiting...${NC}"; exit 1;
-fi
-
+take_input()
+{
 printf "\n-- Tata Sky Playlist Auto-Updater --"
 printf "\nAuthor: Nageshwar128\n"
 echo "GitHub Profile: https://github.com/Nageshwar128"
-echo "------------------------------------------------------"
+echo "-------------------------------------------------"
 tput sgr0;
 echo "Enter the required details below: "
 echo " "
@@ -35,6 +18,29 @@ read -p " Enter your Tata Sky Password: " tata_pass;
 read -p " Enter your GitHub Email Address: " git_mail;
 read -p " Enter your GitHub Username: " git_id;
 read -p " Enter your GitHub Token: " git_token;
+}
+
+if [[ $OSTYPE == 'linux-gnu'* ]]; then
+packages='gh expect python3 python3-pip'
+for package in $packages; do
+dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
+done
+clear
+tput setaf 6; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+take_input;
+
+elif [[ $OSTYPE == 'linux-android'* ]]; then
+packages='gh expect python ncurses-utils gettext'
+for package in $packages; do
+dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
+done
+clear
+tput setaf 6; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+take_input;
+else
+echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
+fi
+
 git config --global user.name "$git_id"
 git config --global user.email "$git_mail"
 git clone https://github.com/ForceGT/Tata-Sky-IPTV || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
@@ -46,7 +52,6 @@ sed -i "s/PASSWORD/$pass/g" script.exp
 sed -i "s/SUB_ID/$sub_id/g" script.exp
 sed -i "s/MOB_NO/$tata_mobile/g" script.exp
 ./script.exp || { echo "Something went wrong."; exit 1; }
-rm script.exp
 curl -s 'https://gist.githubusercontent.com/Nageshwar128/a334ac6d6404045b1c23eaa583e93458/raw/script.exp' > script.exp
 chmod 755 script.exp
 echo "$git_token" >> mytoken.txt
@@ -71,7 +76,6 @@ export git_mail=$git_mail
 cat substitute.txt | envsubst >> TataSkyDailyWorkflow.yml
 rm substitute.txt
 cd ../..
-rm .gitignore
 echo "code_samples/__pycache__" > .gitignore && echo "allChannelPlaylist.m3u" >> .gitignore && echo "userSubscribedChannels.json" >> .gitignore
 git remote remove origin
 git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git"
