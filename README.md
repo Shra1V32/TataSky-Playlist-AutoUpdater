@@ -14,8 +14,8 @@
 
 ## Compatibility:
 * Linux
-* Termux App from F-Droid (Mobile)
-* Windows Subsystem for Linux (Google it if you want to know how to install Linux Subsystem on Windows)
+* Termux App from [Fdroid](https://f-droid.org/en/packages/com.termux/)
+* Windows Subsystem for Linux
 
 ## How to use?
 * Copy the below script and paste it in the terminal:
@@ -26,7 +26,7 @@ curl -s 'https://raw.githubusercontent.com/Nageshwar128/TataSky-Playlist-AutoUpd
 * Please wait until the script does the job for you.
 * And That's it there you go, After a few seconds you'll be greeted with a new repo created in your account that makes the job of updating the playlist everyday.
 
-Now you don't need to touch anything, It updates the playlist on it's own everyday and you only need to Update the playlist in Tivimate.
+Now you don't need to touch anything, It updates the playlist on its own everyday and you only need to Update the playlist in Tivimate.
 All the steps above are to be done only for once. Please Star my repo if you've liked my work! :)
 
 ## FAQs
