@@ -19,5 +19,5 @@ pkg install git gh ncurses-utils expect python gettext -y || { echo -e "${RED}So
 pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
 echo "Installation done successfully, Executing the main.sh script now..."
 else
-echo -e "${RED}Platform not supported, Exiting...${NC}"; exit 1;
+echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
 fi
