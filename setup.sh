@@ -21,3 +21,5 @@ echo "Installation done successfully, Executing the main.sh script now..."
 else
 echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
 fi
+
+touch .setupinitiated

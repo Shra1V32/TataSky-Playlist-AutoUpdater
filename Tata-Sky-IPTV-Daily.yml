@@ -1,0 +1,32 @@
+name: Tata Sky Daily Workflow
+on:
+ schedule:
+   - cron: "00 21  * * *"
+ workflow_dispatch:
+  inputs:
+defaults:
+  run:
+    shell: bash
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Daily Loop
+      run: |
+                       git config --global user.name "$git_id"
+                       git config --global user.email "$git_mail"
+                       git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily
+                       cd TataSkyIPTV-Daily/
+                       git pull https://github.com/ForceGT/Tata-Sky-IPTV || echo "No need to update repo"
+                       cd code_samples/
+                       chmod 755 *
+                       sudo apt-get install expect -y
+                       ./script.exp
+                       git clone ${gist_url}
+                       rm ${dir}/allChannelPlaylist.m3u
+                       mv *.m3u ${dir}/
+                       cd ${dir}
+                       git add .
+                       git commit -m "Playlist has been updated."
+                       git push
+                       exit
