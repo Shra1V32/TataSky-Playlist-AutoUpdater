@@ -8,9 +8,11 @@ take_input()
 printf "\n-- Tata Sky Playlist Auto-Updater --"
 printf "\nAuthor: Nageshwar128\n"
 echo "GitHub Profile: https://github.com/Nageshwar128"
+printf '\n'
+printf "\nThis Scipt is for Automatically generating the Tata Sky M3U Playlists Everyday keep the Playlist URL Constant, It's only your IPTV Player which needs to refresh for every 24 Hrs. I would like to thank Gaurav Thakkar sincerely for his work on Playlist Generator. \n\nNow, Get ready to dwell into this journey. \n"
 echo "-------------------------------------------------"
 tput sgr0;
-echo "Enter the required details below: "
+echo "Please Enter the required details below to proceed further: "
 echo " "
 read -p " Enter your Tata Sky Subscriber ID: " sub_id;
 read -p " Enter your Tata Sky Mobile Number: " tata_mobile;
@@ -21,7 +23,7 @@ read -p " Enter your GitHub Token: " git_token;
 }
 
 if [[ $OSTYPE == 'linux-gnu'* ]]; then
-packages='gh expect python3 python3-pip'
+packages='curl gh expect python3 python3-pip'
 for package in $packages; do
 dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
 done
@@ -45,14 +47,14 @@ git config --global user.name "$git_id"
 git config --global user.email "$git_mail"
 git clone https://github.com/ForceGT/Tata-Sky-IPTV || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
 cd Tata-Sky-IPTV/code_samples/
-curl -s 'https://gist.githubusercontent.com/Nageshwar128/25e2fcd571fcb9466c3d95b35ba36fa3/raw/script.exp' > script.exp
+cat $LOCALDIR/script.exp > script.exp
 chmod 755 script.exp
 pass=$(echo "$tata_pass" | sed 's#\$#\\\\$#g' )
 sed -i "s/PASSWORD/$pass/g" script.exp
 sed -i "s/SUB_ID/$sub_id/g" script.exp
 sed -i "s/MOB_NO/$tata_mobile/g" script.exp
 ./script.exp || { echo "Something went wrong."; exit 1; }
-curl -s 'https://gist.githubusercontent.com/Nageshwar128/a334ac6d6404045b1c23eaa583e93458/raw/script.exp' > script.exp
+cat $LOCALDIR/post_script.exp > script.exp
 chmod 755 script.exp
 echo "$git_token" >> mytoken.txt
 gh auth login --with-token < mytoken.txt
@@ -66,15 +68,12 @@ dir="${gist_url##*/}"
 rm allChannelPlaylist.m3u gist_link.txt
 gh repo create TataSkyIPTV-Daily --private -y || echo "New repo has been created"
 mkdir -p .github/workflows && cd .github/workflows
-curl -s 'https://gist.githubusercontent.com/Nageshwar128/9bb06a83b4fb55d744a0099cf34e8b5d/raw/TataSkyDailyWorkflow.yml' > TataSkyDailyWorkflow.yml
-curl -s 'https://gist.githubusercontent.com/Nageshwar128/469d24f4739c64542c7c4fa074dc95bf/raw/substitute.txt' > substitute.txt
 export dir=$dir
 export gist_url=$gist_url
 export git_id=$git_id
 export git_token=$git_token
 export git_mail=$git_mail
-cat substitute.txt | envsubst >> TataSkyDailyWorkflow.yml
-rm substitute.txt
+cat $LOCALDIR/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
 cd ../..
 echo "code_samples/__pycache__" > .gitignore && echo "allChannelPlaylist.m3u" >> .gitignore && echo "userSubscribedChannels.json" >> .gitignore
 git remote remove origin
@@ -88,13 +87,13 @@ cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.
 git add .
 git commit -m "Initial Playlist Upload"
 git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
-tput setaf 27; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 27; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n" && tput setaf 27; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
+tput setaf 51; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 51; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n" && tput setaf 51; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
 tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
-tput setaf 27; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
-tput setaf 2; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
-tput setaf 2; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
-tput setaf 2; echo "My Github Profile: https://github.com/Nageshwar128"
-echo " " && echo " "
+tput setaf 51; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
+tput setaf 51; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
+tput setaf 51; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
+tput setaf 51; echo "My Github Profile: https://github.com/Nageshwar128"
+printf '\n\n'
 rm -rf $LOCALDIR/Tata-Sky-IPTV
 echo "Press Enter to exit."; read junk;
 tput setaf init;

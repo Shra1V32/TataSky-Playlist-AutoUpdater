@@ -22,9 +22,13 @@
 ```bash
 curl -s 'https://raw.githubusercontent.com/Nageshwar128/TataSky-Playlist-AutoUpdater/main/setup.sh' | bash; git clone https://github.com/Nageshwar128/TataSky-Playlist-AutoUpdater; cd TataSky-Playlist-AutoUpdater; bash ./main.sh;
 ```
+* Please wait until the setup is complete.
 * Now, Enter the required details asked there.
+![image](https://i.ibb.co/B6xMrks/Screenshot-2022-01-09-234349.png)
 * Please wait until the script does the job for you.
-* And That's it there you go, After a few seconds you'll be greeted with a new repo created in your account that makes the job of updating the playlist everyday.
+* And That's it there you go, After a few seconds you'll be greeted with a new repo and your playlist URL created in your account that makes the job of updating the playlist everyday.
+
+![image](https://i.ibb.co/NKqMnPg/Screenshot-2022-01-10-001252.png)
 
 Now you don't need to touch anything, It updates the playlist on its own everyday and you only need to Update the playlist in Tivimate.
 All the steps above are to be done only for once. Please Star my repo if you've liked my work! :)
