@@ -51,6 +51,9 @@ I've created the script where Actions will automatically trigger the workflow ev
 
 The tokens, GitHub email and ID are required because we are basically creating another repo and gists with this script using them.
 
+## Discussion Group
+* [Telegram](https://t.me/tskyiptv)
+
 ## Credits
 
 * [Gaurav Thakkar](https://github.com/ForceGT) for his [IPTV Repo](https://github.com/ForceGT/Tata-Sky-IPTV)
