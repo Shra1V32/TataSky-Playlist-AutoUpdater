@@ -15,7 +15,7 @@ tput sgr0;
 echo "Please Enter the required details below to proceed further: "
 echo " "
 read -p " Enter your Tata Sky Subscriber ID: " sub_id;
-read -p " Enter your Tata Sky Mobile Number: " tata_mobile;
+read -p " Enter your Tata Sky Registered Mobile Number: " tata_mobile;
 read -p " Enter your Tata Sky Password: " tata_pass;
 read -p " Enter your GitHub Email Address: " git_mail;
 read -p " Enter your GitHub Username: " git_id;
