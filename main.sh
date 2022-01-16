@@ -6,8 +6,8 @@ NC='\033[0m'
 take_input()
 {
 printf "\n-- Tata Sky Playlist Auto-Updater --"
-printf "\nAuthor: Nageshwar128\n"
-echo "GitHub Profile: https://github.com/Nageshwar128"
+printf "\nAuthor: Shra1V32\n"
+echo "GitHub Profile: https://github.com/Shra1V32"
 printf '\n'
 printf "\nThis Scipt is for Automatically generating the Tata Sky M3U Playlists Everyday keep the Playlist URL Constant, It's only your IPTV Player which needs to refresh for every 24 Hrs. I would like to thank Gaurav Thakkar sincerely for his work on Playlist Generator. \n\nNow, Get ready to dwell into this journey. \n"
 echo "-------------------------------------------------"
@@ -80,7 +80,7 @@ git remote remove origin
 git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git"
 git branch -M main default || git branch -M main
 git add .
-git commit --author="Nageshwar128<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
+git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
 git push --set-upstream origin main || { echo "Normal push failed, Trying to Force Push..."; git push -f --set-upstream origin main; }
 git clone ${gist_url} >> /dev/null 2>&1
 cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.m3u .
@@ -90,9 +90,9 @@ git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ER
 tput setaf 51; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 51; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n" && tput setaf 51; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
 tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
 tput setaf 51; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
-tput setaf 51; echo "Script by Nageshwar128, Please do star my repo if you've liked my work :) "
+tput setaf 51; echo "Script by Shra1V32, Please do star my repo if you've liked my work :) "
 tput setaf 51; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
-tput setaf 51; echo "My Github Profile: https://github.com/Nageshwar128"
+tput setaf 51; echo "My Github Profile: https://github.com/Shra1V32"
 printf '\n\n'
 rm -rf $LOCALDIR/Tata-Sky-IPTV
 echo "Press Enter to exit."; read junk;
