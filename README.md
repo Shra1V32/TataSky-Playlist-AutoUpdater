@@ -20,7 +20,7 @@
 ## How to use?
 * Copy the below script and paste it in the terminal:
 ```bash
-curl -s 'https://raw.githubusercontent.com/Nageshwar128/TataSky-Playlist-AutoUpdater/main/setup.sh' | bash; git clone https://github.com/Nageshwar128/TataSky-Playlist-AutoUpdater; cd TataSky-Playlist-AutoUpdater; bash ./main.sh;
+curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/setup.sh' | bash; git clone https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater; cd TataSky-Playlist-AutoUpdater; bash ./main.sh;
 ```
 * Please wait until the setup is complete.
 * Now, Enter the required details asked there.
