@@ -6,7 +6,10 @@ echo "Please wait while the installation takes place..."
 printf "Please Enter your password to proceed with the setup: "
 sudo echo '' > /dev/null 2>&1
 sudo apt update
-sudo apt install python3 python3-pip expect -y && pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+sudo apt install python3.9 expect -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3.9 get-pip.py
+pip3.9 install requests
 curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
 sudo apt update
