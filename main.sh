@@ -31,12 +31,34 @@ take_vars()
 if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
 take_input;
 else
-printf "\nLooks like you've already entered the details, Taking the data from .usercreds so that you won't have to enter the details again...\n"
-source ./.usercreds
-sleep 5;
+ask_direct_login;
+sleep 3;
 fi
 }
 
+save_creds()
+{
+    if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
+    echo "Saving usercreds so that you don't have to login again..."
+    printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ntata_pass=\'$tata_pass\'\ngit_mail=\'$git_mail\'\ngit_id=\'$git_id\'\ngit_token=\'$git_token\'\n" > $LOCALDIR/.usercreds
+    fi
+}
+
+ask_direct_login()
+{
+    read -p "Looks like this is not the first time you're running the script, Would you like to take the credentials from .usercreds? (y/n): " response;
+    if [[ "$response" == 'y' ]]; then
+    source $LOCALDIR/.usercreds
+    main;
+    elif [[ "$response" == 'n' ]]; then
+    rm .usercreds;
+    start && main;
+    else
+    echo "Invalid option chosen, Try again..." && ask_direct_login;
+    fi
+}
+
+start(){
 if [[ $OSTYPE == 'linux-gnu'* ]]; then
 packages='curl gh expect python3 python3-pip'
 for package in $packages; do
@@ -46,6 +68,7 @@ clear
 tput setaf 6; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 info;
 take_vars;
+python='python3.9'
 
 elif [[ $OSTYPE == 'linux-android'* ]]; then
 packages='gh expect python ncurses-utils gettext'
@@ -56,15 +79,19 @@ clear
 tput setaf 6; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
 info;
 take_vars;
+python='python3'
 else
 echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
 fi
+}
 
+main()
+{
 git config --global user.name "$git_id"
 git config --global user.email "$git_mail"
 git clone https://github.com/ForceGT/Tata-Sky-IPTV || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
 cd Tata-Sky-IPTV/code_samples/
-cat $LOCALDIR/dependencies/script.exp > script.exp
+cat $LOCALDIR/dependencies/script.exp | sed "s/python3/$python/g" > script.exp
 chmod 755 script.exp
 pass=$(echo "$tata_pass" | sed 's#\$#\\\\$#g' )
 sed -i "s/PASSWORD/$pass/g" script.exp
@@ -104,8 +131,7 @@ cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.
 git add .
 git commit -m "Initial Playlist Upload"
 git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
-echo "Saving usercreds so that you don't have to login again..."
-printf "sub_id=$sub_id\ntata_mobile=$tata_mobile\ntata_pass=$tata_pass\ngit_mail=$git_mail\ngit_id=$git_id\ngit_token=$git_token\n" > .usercreds
+save_creds;
 tput setaf 51; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 51; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n" && tput setaf 51; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
 tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
 tput setaf 51; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
@@ -116,3 +142,7 @@ printf '\n\n'
 rm -rf $LOCALDIR/Tata-Sky-IPTV;
 echo "Press Enter to exit."; read junk;
 tput setaf init;
+}
+start;
+
+
