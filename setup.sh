@@ -17,10 +17,15 @@ sudo apt install gh
 echo "Installation done successfully, Executing the main.sh script now..."
 
 elif [[ $OSTYPE == 'linux-android'* ]]; then
+if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
 echo "Please wait while the installation takes place..."
 pkg install git gh ncurses-utils expect python gettext -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
 pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
 echo "Installation done successfully, Executing the main.sh script now..."
+else
+echo -e "Please use Latest Termux release, i.e, from FDroid (https://f-droid.org/en/packages/com.termux/)";
+exit 1;
+fi
 else
 echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
 fi
