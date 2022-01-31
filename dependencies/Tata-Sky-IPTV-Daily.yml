@@ -15,9 +15,9 @@ jobs:
       run: |
             git config --global user.name "$git_id"
             git config --global user.email "$git_mail"
-            git config pull.ff only
             git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily
             cd TataSkyIPTV-Daily/
+            git config pull.ff only
             git pull https://github.com/ForceGT/Tata-Sky-IPTV || echo "No need to update repo"
             cd code_samples/
             curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/dependencies/post_script.exp' > script.exp

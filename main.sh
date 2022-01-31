@@ -51,7 +51,7 @@ save_creds()
 
 ask_direct_login()
 {
-    read -p "Looks like this is not the first time you're running the script, Would you like to take the credentials from .usercreds? (y/n): " response;
+    read -p "File .usercreds already exists, Would you like to take all the inputs from it? (y/n): " response;
     if [[ "$response" == 'y' ]]; then
     source $LOCALDIR/.usercreds
     main;
@@ -65,7 +65,7 @@ ask_direct_login()
 
 check_if_repo_exists()
 {
-    check_repo=$(curl -i -s -H "Authorization: token $git_token"     https://api.github.com/user/repos | grep 'TataSkyIPTV-Daily')
+    check_repo=$(curl -i -s -H "Authorization: token $git_token"     https://api.github.com/user/repos | grep 'TataSkyIPTV-Daily') || true
     if [[ -n $check_repo ]]; then
     repo_exists='true'
     ask_user_to_select;
@@ -76,13 +76,13 @@ check_if_repo_exists()
 
 ask_user_to_select()
 {
-    printf "\n Looks like this is not the first time you're running the script: \n\n"
+    printf "\n Repo named 'TataSkyIPTV-Daily' already exists, What would you like to perform? \n\n"
     echo "   1. Re-run the script & Update my repo with same playlist."
     echo "   2. Maintain other playlist with another Tata Sky Account"
     echo "   3. Generate new playlist with new link (Same repo & 1 Branch)"
     printf '\n'
     while true; do
-    read -p "Select from two options above: " selection
+    read -p "Select from the options above: " selection
     case $selection in
     '1')echo "Option 1 chosen"; break;;
     '2')echo "Option 2 chosen"; break;;
@@ -94,7 +94,7 @@ ask_user_to_select()
 
 take_vars_from_existing_repo()
 {
-    if [[ $option == '1' ]]; then
+    if [[ $selection == '1' ]]; then
     dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" | grep 'gist' | sed 's/.*\///g')
     gist_url="https://$git_token@gist.github.com/$dir"
     fi
@@ -108,7 +108,7 @@ start()
     dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
     done
     clear
-    tput setaf 6; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+    tput setaf 41; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
     info;
     python='python3.9'
     take_vars;
@@ -120,7 +120,7 @@ start()
     dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
     done
     clear
-    tput setaf 6; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+    tput setaf 41; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
     info;
     python='python3'
     take_vars;
@@ -138,24 +138,24 @@ create_gist()
     gist_url=$(cat gist_link.txt)
     dir="${gist_url##*/}"
     rm allChannelPlaylist.m3u gist_link.txt
-    gh repo create TataSkyIPTV-Daily --private -y >> /dev/null 2>&1 || echo " " >> /dev/null 2>&1
+    gh repo create TataSkyIPTV-Daily --private -y >> /dev/null 2>&1 || true
     fi
 }
 
 dynamic_push()
 {
-    if [[ $selection == "1" || $selection == '3' ]]; then
+    if [[ "$selection" == "1" || "$selection" == '3' ]]; then
     git add .
     git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
     git branch -M main
     git push -f --set-upstream origin main;
-    elif [[ $selection == "2" ]]; then
+    elif [[ "$selection" == "2" ]]; then
     branch_name=$(echo "$dir" | cut -c 1-6)
     git add .
     git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
     git branch -M $branch_name
     git push -f --set-upstream origin $branch_name
-    elif [[ $repo_exists == 'false' ]]; then
+    elif [[ "$repo_exists" == 'false' ]]; then
     git add .
     git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
     git branch -M main
@@ -168,7 +168,7 @@ main()
     extract_git_vars;
     git config --global user.name "$git_id"
     git config --global user.email "$git_mail"
-    check_if_repo_exists
+    check_if_repo_exists;
     git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
     cd Tata-Sky-IPTV/code_samples/
     cat $LOCALDIR/dependencies/script.exp | sed "s/python3/$python/g" > script.exp
@@ -180,7 +180,7 @@ main()
     ./script.exp || { echo "Something went wrong."; exit 1; }
     echo "$git_token" >> mytoken.txt
     gh auth login --with-token < mytoken.txt
-    rm mytoken.txt
+    rm mytoken.txt script.exp
     cd ..
     create_gist;
     take_vars_from_existing_repo;
@@ -203,7 +203,7 @@ main()
     git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
     save_creds;
     tput setaf 51; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 51; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
-    if [[ "$selection" == '2' ]]; then echo "Check your other playlist branch here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily/tree/$dir"; fi
+    if [[ "$selection" == '2' ]]; then tput setaf 51; echo -e "Check your other playlist branch here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily/tree/$dir"; fi
     tput setaf 51; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
     tput setaf 51; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
