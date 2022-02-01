@@ -9,8 +9,6 @@ Generate new token --> Give all the permissions --> save it somewhere securely.
 
 * Tata Sky account details (Like Subscriber ID, Tata Sky Account Password, Tata Sky Registered Phone number)
 
-* Your GitHub Email and Username, which you're using now.
-
 
 ## Compatibility:
 * Linux
