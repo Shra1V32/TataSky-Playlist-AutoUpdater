@@ -28,6 +28,7 @@ take_vars()
 {
     if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
     take_input;
+    ask_playlist_type;
     main;
     else
     ask_direct_login;
@@ -39,6 +40,41 @@ extract_git_vars()
 {
     git_id=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user | grep 'login' | sed 's/login//g' | tr -d '[:punct:] ')
     git_mail=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user/emails | grep 'email' | head -n1 | tr -d '", ' | sed 's/email://g')
+}
+
+initiate_setup()
+{
+    if [[ $OSTYPE == 'linux-gnu'* ]]; then
+    echo "Please wait while the installation takes place..."
+    printf "Please Enter your password to proceed with the setup: "
+    sudo echo '' > /dev/null 2>&1
+    sudo apt update
+    sudo apt install python3.9 expect -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    python3.9 get-pip.py
+    pip3.9 install requests
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    sudo apt update
+    sudo apt install gh
+    echo "Installation done successfully!"
+    
+    elif [[ $OSTYPE == 'linux-android'* ]]; then
+    if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
+    echo "Please wait while the installation takes place..."
+    pkg install git gh ncurses-utils expect python gettext -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+    pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+    echo "Installation done successfully!"
+    else
+    echo -e "Please use Latest Termux release, i.e, from FDroid (https://f-droid.org/en/packages/com.termux/)";
+    exit 1;
+    fi
+    else
+    echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
+    fi
+    
+    touch .setupinitiated
+
 }
 
 save_creds()
@@ -54,6 +90,7 @@ ask_direct_login()
     read -p "File .usercreds already exists, Would you like to take all the inputs from it? (y/n): " response;
     if [[ "$response" == 'y' ]]; then
     source $LOCALDIR/.usercreds
+    ask_playlist_type;
     main;
     elif [[ "$response" == 'n' ]]; then
     rm .usercreds;
@@ -79,7 +116,7 @@ ask_user_to_select()
     printf "\n Repo named 'TataSkyIPTV-Daily' already exists, What would you like to perform? \n\n"
     echo "   1. Re-run the script & Update my repo with same playlist."
     echo "   2. Maintain other playlist with another Tata Sky Account"
-    echo "   3. Generate new playlist with new link (Same repo & 1 Branch)"
+    echo "   3. Generate new playlist with new link"
     printf '\n'
     while true; do
     read -p "Select from the options above: " selection
@@ -100,12 +137,27 @@ take_vars_from_existing_repo()
     fi
 }
 
+ask_playlist_type()
+{
+    printf "\nWhich type of playlist would you like to have? \n\n"
+    echo "  1. Kodi & Tivimate Compatible"
+    printf "  2. Tivimate & OTT Navigator Compatible\n\n"
+    read -p "Select from the options above: " playlist_type;
+    while true; do
+    case $playlist_type in
+    '1')echo "Option 1 chosen"; break;;
+    '2')echo "Option 2 chosen"; break;;
+    *)echo "Invalid option chosen, Please try again...";;
+    esac
+    done
+}
+
 start()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
     packages='curl gh expect python3 python3-pip'
     for package in $packages; do
-    dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
+    dpkg -s $package > /dev/null 2>&1 || initiate_setup;
     done
     clear
     tput setaf 41; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
@@ -117,7 +169,7 @@ start()
     elif [[ $OSTYPE == 'linux-android'* ]]; then
     packages='gh expect python ncurses-utils gettext'
     for package in $packages; do
-    dpkg -s $package > /dev/null 2>&1 || { echo -e "${RED} $package is not installed, Make sure you've run setup.sh file before running this script.${NC}"; exit 1; }
+    dpkg -s $package > /dev/null 2>&1 || initiate_setup;
     done
     clear
     tput setaf 41; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
@@ -144,20 +196,16 @@ create_gist()
 
 dynamic_push()
 {
-    if [[ "$selection" == "1" || "$selection" == '3' ]]; then
     git add .
     git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
+    if [[ "$selection" == "1" || "$selection" == '3' ]]; then
     git branch -M main
     git push -f --set-upstream origin main;
     elif [[ "$selection" == "2" ]]; then
     branch_name=$(echo "$dir" | cut -c 1-6)
-    git add .
-    git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
     git branch -M $branch_name
     git push -f --set-upstream origin $branch_name
     elif [[ "$repo_exists" == 'false' ]]; then
-    git add .
-    git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
     git branch -M main
     git push --set-upstream origin main
     fi
@@ -171,6 +219,7 @@ main()
     check_if_repo_exists;
     git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
     cd Tata-Sky-IPTV/code_samples/
+    if [[ $playlist_type == '2' ]]; then git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1; fi
     cat $LOCALDIR/dependencies/script.exp | sed "s/python3/$python/g" > script.exp
     chmod 755 script.exp
     pass=$(echo "$tata_pass" | sed 's#\$#\\\\$#g' )
@@ -207,7 +256,7 @@ main()
     tput setaf 51; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
     tput setaf 51; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
-    tput setaf 51; echo "Script by Shra1V32, Please do star my repo if you've liked my work :) "
+    tput setaf 51; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
     tput setaf 51; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
     tput setaf 51; echo "My Github Profile: https://github.com/Shra1V32"
     printf '\n\n'
