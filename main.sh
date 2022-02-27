@@ -98,6 +98,7 @@ initiate_setup()
     elif [[ $OSTYPE == 'linux-android'* ]]; then
     if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
     echo "Please wait while the installation takes place..."
+    apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
     pkg install git gh ncurses-utils expect python gettext -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
     pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
     echo "Installation done successfully!"
