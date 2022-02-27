@@ -55,7 +55,7 @@ Menu:\r
 \r
 \r
 Enter your choice:"
-send -- "1\r"
+send -- "2\r"
 expect -exact "1\r
 Enter your Registered Mobile Number without the country code: "
 send -- "MOB_NO"
@@ -67,10 +67,10 @@ send -- "SUB_ID"
 expect -exact "SUB_ID"
 send -- "\r"
 expect -exact "\r
-Enter your password: "
-send -- "PASSWORD\r"
-expect -exact "PASSWORD\r
-Trying to Login with password ............\r
+Enter your otp: "
+send -- "OTP\r"
+expect -exact "OTP\r
+Trying to Login with otp ............\r
 \r
  \r
 \r
