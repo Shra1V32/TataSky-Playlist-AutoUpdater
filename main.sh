@@ -16,12 +16,48 @@ info()
 
 take_input()
 {
+    curl -s "https://raw.githubusercontent.com/ForceGT/Tata-Sky-IPTV/master/code_samples/constants.py" > constants.py &
+    curl -s "https://raw.githubusercontent.com/ForceGT/Tata-Sky-IPTV/master/code_samples/login.py" > login.py &
     echo "Please Enter the required details below to proceed further: "
     echo " "
     read -p " Enter your Tata Sky Subscriber ID: " sub_id;
-    read -p " Enter your Registered Mobile Number without the country code: " tata_mobile;
-    read -p " Enter your Tata Sky Password: " tata_pass;
+    read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
+    send_otp;
     read -p " Enter your GitHub Token: " git_token;
+}
+
+# validate_otp()
+# {
+# validate_otp_data=$(curl -s 'https://www.tataplay.com/inception-auth/v2/user/otp-login-validate' \
+#   -H 'authority: www.tataplay.com' \
+#   -H 'accept: application/json, text/plain, */*' \
+#   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.87 Safari/537.36' \
+#   -H 'content-type: application/json' \
+#   -H 'sec-gpc: 1' \
+#   -H 'origin: https://www.tataplay.com' \
+#   -H 'sec-fetch-site: same-origin' \
+#   -H 'sec-fetch-mode: cors' \
+#   -H 'sec-fetch-dest: empty' \
+#   -H 'referer: https://www.tataplay.com/my-account/authenticate' \
+#   -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
+#   --data-raw "{\"otp\":\"$tata_otp\",\"subscriberId\":\"$tata_mobile\"}" \
+#   --compressed | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') > source)
+# }
+
+send_otp()
+{
+    send_otp_data=$(curl -s "https://kong-tatasky.videoready.tv/rest-api/pub/api/v1/rmn/$tata_mobile/otp");
+    if [[ "$send_otp_data" == *"\"code\":1008"* ]]; then
+    printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
+    exit;
+    fi
+    echo "OTP Sent successfully"
+    read -p " Enter the OTP Received: " tata_otp;
+    login_otp=$(python3 login.py --otp "$tata_otp" --sid "$sub_id" --rmn "$tata_mobile")
+    if [[ "$login_otp" == *'Please enter valid OTP.'* ]]; then
+    echo "$login_otp"
+    false;
+    fi
 }
 
 take_vars()
@@ -81,7 +117,7 @@ save_creds()
 {
     if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
     echo "Saving usercreds so that you don't have to login again..."
-    printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ntata_pass=\'$tata_pass\'\ngit_token=\'$git_token\'\n" > $LOCALDIR/.usercreds
+    printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ngit_token=\'$git_token\'\n" > $LOCALDIR/.usercreds
     fi
 }
 
@@ -90,6 +126,7 @@ ask_direct_login()
     read -p "File .usercreds already exists, Would you like to take all the inputs from it? (y/n): " response;
     if [[ "$response" == 'y' ]]; then
     source $LOCALDIR/.usercreds
+    send_otp;
     ask_playlist_type;
     main;
     elif [[ "$response" == 'n' ]]; then
@@ -219,14 +256,11 @@ main()
     check_if_repo_exists;
     git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
     cd Tata-Sky-IPTV/code_samples/
+    mv $LOCALDIR/userDetails.json .
     if [[ $playlist_type == '2' ]]; then git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1; fi
-    cat $LOCALDIR/dependencies/script.exp | sed "s/python3/$python/g" > script.exp
+    cat $LOCALDIR/dependencies/post_script.exp > script.exp
     chmod 755 script.exp
-    pass=$(echo "$tata_pass" | sed 's#\$#\\\\$#g' )
-    sed -i "s/PASSWORD/$pass/g" script.exp
-    sed -i "s/SUB_ID/$sub_id/g" script.exp
-    sed -i "s/MOB_NO/$tata_mobile/g" script.exp
-    ./script.exp || { echo "Something went wrong."; exit 1; }
+    ./script.exp
     echo "$git_token" >> mytoken.txt
     gh auth login --with-token < mytoken.txt
     rm mytoken.txt script.exp
@@ -265,5 +299,4 @@ main()
     tput setaf init;
 }
 start;
-
 

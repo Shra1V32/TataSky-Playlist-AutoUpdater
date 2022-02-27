@@ -1,1 +1,4 @@
 .usercreds
+*.py
+__pycache__/
+Tata-Sky-IPTV/
