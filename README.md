@@ -1,11 +1,15 @@
-# Tata Sky IPTV Playlist Auto-Updater Script
+# Tata Sky | Tata Play IPTV Playlist Auto-Updater Script
 ### A Script to trigger the GitHub Actions every day to update the Tata Sky Playlist, A 20-second-run from your terminal for all that first one-time setup!
+[![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)](https://www.gnu.org/software/bash/)
+[![GitHub license](https://badgen.net/github/license/Shra1V32/TataSky-Playlist-AutoUpdater)](https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/Shra1V32/TataSky-Playlist-AutoUpdater?style=social&label=Star&maxAge=2592000)](https://GitHub.com/Shra1V32/TataSky-Playlist-AutoUpdater/stargazers/)
+[![GitHub forks](https://img.shields.io/github/forks/Shra1V32/TataSky-Playlist-AutoUpdater.svg?style=social&label=Fork&maxAge=2592000)](https://GitHub.com/Shra1V32/TataSky-Playlist-AutoUpdater/network/)
 
 ## Prerequisites:
 * Linux/Unix System
 * You need to have your own GitHub Token
 * For Token need to register from [here](https://github.com/settings/tokens)
-Generate new token --> Give all the permissions --> save it somewhere securely.
+Generate new token > Give all the permissions > save it somewhere securely.
 
 * Tata Sky account details (Like Subscriber ID, Tata Sky Account Password, Tata Sky Registered Phone number)
 
@@ -18,7 +22,7 @@ Generate new token --> Give all the permissions --> save it somewhere securely.
 ## How to use?
 * Copy the below script and paste it in the terminal:
 ```bash
-curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh' > curl.sh; chmod 755 curl.sh; ./curl.sh;
+bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')
 ```
 * Please wait until the setup is complete.
 * Now, Enter the required details asked there.
