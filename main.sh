@@ -74,7 +74,7 @@ take_vars()
 
 extract_git_vars()
 {
-    git_id=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user | grep 'login' | sed 's/login//g' | tr -d '[:punct:] ')
+    git_id=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user | grep 'login' | sed 's/login//g' | tr -d '":, ')
     git_mail=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user/emails | grep 'email' | head -n1 | tr -d '", ' | sed 's/email://g')
 }
 
