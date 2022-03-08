@@ -10,8 +10,13 @@
 * You need to have your own GitHub Token
 * For Token need to register from [here](https://github.com/settings/tokens)
 Generate new token > Give all the permissions > save it somewhere securely.
-
 * Tata Sky account details (Like Subscriber ID, Tata Sky Account Password, Tata Sky Registered Phone number)
+
+## Features:
+- Ability to create multiple m3u playlists
+- Able to select from the playlists type (OTT Navigator or Kodi)
+- One-time login (No need to enter your credentials again & again)
+- Easy-to-use (Paste a line & You'll be able to create a playlist)
 
 
 ## Compatibility:
