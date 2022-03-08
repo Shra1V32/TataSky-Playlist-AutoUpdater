@@ -3,6 +3,7 @@ LOCALDIR=$(pwd)
 RED='\033[0;31m'
 NC='\033[0m'
 
+## Print info
 info()
 {
     printf "\n-- Tata Sky Playlist Auto-Updater --"
@@ -12,38 +13,45 @@ info()
     printf "\n * This Script is for Automatically generating the Tata Sky M3U Playlists Everyday keep the Playlist URL Constant, It's only your IPTV Player which needs to refresh for every 24 Hrs. I would like to thank Gaurav Thakkar sincerely for his work on Playlist Generator. \n* Enter only valid information \n\nNow, Get ready to dwell into this journey. \n"
     echo "-------------------------------------------------"
     tput sgr0;
-}
-
-take_input()
-{
     curl -s "https://raw.githubusercontent.com/ForceGT/Tata-Sky-IPTV/master/code_samples/constants.py" > constants.py &
     curl -s "https://raw.githubusercontent.com/ForceGT/Tata-Sky-IPTV/master/code_samples/login.py" > login.py &
     echo "Please Enter the required details below to proceed further: "
     echo " "
+}
+
+## Take inputs
+take_input()
+{
+    read -p " Enter your GitHub Token: " git_token;
+    extract_git_vars;
+    source source;
+    if [[ "$name" != 'company' ]]; then
+    tput setaf 43; echo Welcome, $name.; tput init;
+    fi
     read -p " Enter your Tata Sky Subscriber ID: " sub_id;
     read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
     send_otp;
-    read -p " Enter your GitHub Token: " git_token;
 }
 
-# validate_otp()
-# {
-# validate_otp_data=$(curl -s 'https://www.tataplay.com/inception-auth/v2/user/otp-login-validate' \
-#   -H 'authority: www.tataplay.com' \
-#   -H 'accept: application/json, text/plain, */*' \
-#   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.87 Safari/537.36' \
-#   -H 'content-type: application/json' \
-#   -H 'sec-gpc: 1' \
-#   -H 'origin: https://www.tataplay.com' \
-#   -H 'sec-fetch-site: same-origin' \
-#   -H 'sec-fetch-mode: cors' \
-#   -H 'sec-fetch-dest: empty' \
-#   -H 'referer: https://www.tataplay.com/my-account/authenticate' \
-#   -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
-#   --data-raw "{\"otp\":\"$tata_otp\",\"subscriberId\":\"$tata_mobile\"}" \
-#   --compressed | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') > source)
-# }
+## validate_otp()
+## {
+## validate_otp_data=$(curl -s 'https://www.tataplay.com/inception-auth/v2/user/otp-login-validate' \
+##   -H 'authority: www.tataplay.com' \
+##   -H 'accept: application/json, text/plain, */*' \
+##   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.87 Safari/537.36' \
+##   -H 'content-type: application/json' \
+##   -H 'sec-gpc: 1' \
+##   -H 'origin: https://www.tataplay.com' \
+##   -H 'sec-fetch-site: same-origin' \
+##   -H 'sec-fetch-mode: cors' \
+##   -H 'sec-fetch-dest: empty' \
+##   -H 'referer: https://www.tataplay.com/my-account/authenticate' \
+##   -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
+##   --data-raw "{\"otp\":\"$tata_otp\",\"subscriberId\":\"$tata_mobile\"}" \
+##   --compressed | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') > source)
+## }
 
+## Send OTP using the TSky creds
 send_otp()
 {
     send_otp_data=$(curl -s "https://kong-tatasky.videoready.tv/rest-api/pub/api/v1/rmn/$tata_mobile/otp");
@@ -60,6 +68,7 @@ send_otp()
     fi
 }
 
+## Ask user whether to take data from .usercreds file
 take_vars()
 {
     if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
@@ -72,12 +81,16 @@ take_vars()
     fi
 }
 
+## Extract github variables from the tokens
 extract_git_vars()
 {
     git_id=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user | grep 'login' | sed 's/login//g' | tr -d '":, ')
-    git_mail=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user/emails | grep 'email' | head -n1 | tr -d '", ' | sed 's/email://g')
+    if [ -z "$git_id" ]; then echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; take_vars; fi
+    git_mail=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user/emails | grep 'email' | head -n1 | tr -d '", ' | sed 's/email://g') &
+    git_name=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') | grep 'name' | head -n1 > source && cat source | sed "s#=#=\'#g" | sed "s/$/\'/g" > source)
 }
 
+## Make Setup
 initiate_setup()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
@@ -114,6 +127,7 @@ initiate_setup()
 
 }
 
+## Save creds to .usercreds file for future use
 save_creds()
 {
     if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
@@ -122,6 +136,7 @@ save_creds()
     fi
 }
 
+## Ask direct login if .usercreds file exists
 ask_direct_login()
 {
     read -p "File .usercreds already exists, Would you like to take all the inputs from it? (y/n): " response;
@@ -138,6 +153,7 @@ ask_direct_login()
     fi
 }
 
+## Check if the repo exists
 check_if_repo_exists()
 {
     check_repo=$(curl -i -s -H "Authorization: token $git_token"     https://api.github.com/user/repos | grep 'TataSkyIPTV-Daily') || true
@@ -149,6 +165,7 @@ check_if_repo_exists()
     fi
 }
 
+## Prompt user with certain options in case the repo 'TataSkyIPTV-Daily' repo exists already.
 ask_user_to_select()
 {
     printf "\n Repo named 'TataSkyIPTV-Daily' already exists, What would you like to perform? \n\n"
@@ -167,6 +184,7 @@ ask_user_to_select()
     done
 }
 
+## Take variables from already existing repo
 take_vars_from_existing_repo()
 {
     if [[ $selection == '1' ]]; then
@@ -175,6 +193,7 @@ take_vars_from_existing_repo()
     fi
 }
 
+## Ask user for the playlist 
 ask_playlist_type()
 {
     printf "\nWhich type of playlist would you like to have? \n\n"
@@ -190,6 +209,7 @@ ask_playlist_type()
     done
 }
 
+## Start Script
 start()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
@@ -198,7 +218,7 @@ start()
     dpkg -s $package > /dev/null 2>&1 || initiate_setup;
     done
     clear
-    tput setaf 41; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+    tput setaf 43; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
     info;
     python='python3.9'
     take_vars;
@@ -210,7 +230,7 @@ start()
     dpkg -s $package > /dev/null 2>&1 || initiate_setup;
     done
     clear
-    tput setaf 41; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+    tput setaf 43; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
     info;
     python='python3'
     take_vars;
@@ -219,6 +239,7 @@ start()
     fi
 }
 
+## Make a new gist
 create_gist()
 {
     if [[ $selection == "2" || $repo_exists == 'false' || $selection == '3' ]]; then
@@ -232,6 +253,7 @@ create_gist()
     fi
 }
 
+## Push based on certain conditions
 dynamic_push()
 {
     git add .
@@ -249,6 +271,7 @@ dynamic_push()
     fi
 }
 
+## Main script
 main()
 {
     extract_git_vars;
@@ -286,14 +309,14 @@ main()
     git commit -m "Initial Playlist Upload"
     git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
     save_creds;
-    tput setaf 51; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 51; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
-    if [[ "$selection" == '2' ]]; then tput setaf 51; echo -e "Check your other playlist branch here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily/tree/$dir"; fi
-    tput setaf 51; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
+    tput setaf 43; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
+    if [[ "$selection" == '2' ]]; then tput setaf 43; echo -e "Check your other playlist branch here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily/tree/$dir"; fi
+    tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
-    tput setaf 51; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
-    tput setaf 51; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
-    tput setaf 51; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
-    tput setaf 51; echo "My Github Profile: https://github.com/Shra1V32"
+    tput setaf 43; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
+    tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
+    tput setaf 43; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
+    tput setaf 43; echo "My Github Profile: https://github.com/Shra1V32"
     printf '\n\n'
     rm -rf $LOCALDIR/Tata-Sky-IPTV;
     echo "Press Enter to exit."; read junk;
