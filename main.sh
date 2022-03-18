@@ -2,6 +2,7 @@
 LOCALDIR=$(pwd)
 RED='\033[0;31m'
 NC='\033[0m'
+wait=$(tput setaf 57; echo -e "[◆]${NC}")
 
 ## Print info
 info()
@@ -25,11 +26,9 @@ take_input()
     read -p " Enter your GitHub Token: " git_token;
     extract_git_vars;
     source source;
-    if [[ "$name" != 'company' ]]; then
+    if [[ "$name" != '' ]]; then
     tput setaf 43; echo Welcome, $name.; tput init;
     fi
-    read -p " Enter your Tata Sky Subscriber ID: " sub_id;
-    read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
     send_otp;
 }
 
@@ -54,23 +53,32 @@ take_input()
 ## Send OTP using the TSky creds
 send_otp()
 {
+    read -p " Enter your Tata Sky Subscriber ID: " sub_id;
+    read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
     send_otp_data=$(curl -s "https://kong-tatasky.videoready.tv/rest-api/pub/api/v1/rmn/$tata_mobile/otp");
     if [[ "$send_otp_data" == *"\"code\":1008"* ]]; then
     printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
-    exit;
+    send_otp;
     fi
     echo "OTP Sent successfully"
+    read_otp() {
     read -p " Enter the OTP Received: " tata_otp;
     login_otp=$(python3 login.py --otp "$tata_otp" --sid "$sub_id" --rmn "$tata_mobile")
     if [[ "$login_otp" == *'Please enter valid OTP.'* ]]; then
-    echo "$login_otp"
-    false;
+    echo -e "${RED} Please enter a valid OTP.${NC}"
+    read_otp;
     fi
+    }
+    read_otp;
 }
 
-## Ask user whether to take data from .usercreds file
+## Ask user whether to take data from .usercreds file or userDetails.json
 take_vars()
 {
+    if [[ -f "$LOCALDIR/userDetails.json" ]]; then
+    echo "$wait userDetails.json found in the local directory, Skipping login...";
+    ask_direct_login;
+    fi
     if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
     take_input;
     ask_playlist_type;
@@ -86,19 +94,19 @@ extract_git_vars()
 {
     git_id=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user | grep 'login' | sed 's/login//g' | tr -d '":, ')
     if [ -z "$git_id" ]; then echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; take_vars; fi
-    git_mail=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user/emails | grep 'email' | head -n1 | tr -d '", ' | sed 's/email://g') &
-    git_name=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') | grep 'name' | head -n1 > source && cat source | sed "s#=#=\'#g" | sed "s/$/\'/g" > source)
+    curl -s -H "Authorization: token $git_token"     https://api.github.com/user | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') | grep 'name' | head -n1 > source && cat source | sed "s#=#=\'#g" | sed "s/$/\'/g" > $LOCALDIR/source
+    git_mail=$(curl -s -H "Authorization: token $git_token"     https://api.github.com/user/emails | grep 'email' | head -n1 | tr -d '", ' | sed 's/email://g')
 }
 
 ## Make Setup
 initiate_setup()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
-    echo "Please wait while the installation takes place..."
+    echo "$wait Please wait while the one-time-installation takes place..."
     printf "Please Enter your password to proceed with the setup: "
     sudo echo '' > /dev/null 2>&1
     sudo apt update
-    sudo apt install python3.9 expect -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+    sudo apt install python3.9 expect dos2unix -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     python3.9 get-pip.py
     pip3.9 install requests
@@ -110,9 +118,9 @@ initiate_setup()
     
     elif [[ $OSTYPE == 'linux-android'* ]]; then
     if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
-    echo "Please wait while the installation takes place..."
+    echo "$wait Please wait while the installation takes place..."
     apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
-    pkg install git gh ncurses-utils expect python gettext -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+    pkg install git gh ncurses-utils expect python gettext dos2unix -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
     pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
     echo "Installation done successfully!"
     else
@@ -139,6 +147,20 @@ save_creds()
 ## Ask direct login if .usercreds file exists
 ask_direct_login()
 {
+    if [[ -f "$LOCALDIR/userDetails.json" ]]; then
+    read -p "File userDetails.json already exists, Would you like to take all the required data from it? (y/n): " response;
+    if [[ "$response" == 'y' ]]; then
+    ask_playlist_type;
+    main;
+    elif [[ "$response" == 'n' ]]; then
+    #rm userDetails.json
+    start && main;
+    else
+    echo "Invalid option chosen, Try again..." && ask_direct_login;
+    fi
+    fi
+
+    if [[ -f "$LOCALDIR/.usercreds" ]]; then
     read -p "File .usercreds already exists, Would you like to take all the inputs from it? (y/n): " response;
     if [[ "$response" == 'y' ]]; then
     source $LOCALDIR/.usercreds
@@ -150,6 +172,7 @@ ask_direct_login()
     start && main;
     else
     echo "Invalid option chosen, Try again..." && ask_direct_login;
+    fi
     fi
 }
 
@@ -176,9 +199,9 @@ ask_user_to_select()
     while true; do
     read -p "Select from the options above: " selection
     case $selection in
-    '1')echo "Option 1 chosen"; break;;
-    '2')echo "Option 2 chosen"; break;;
-    '3')echo "Option 3 chosen"; break;;
+    '1')echo "$wait Option 1 chosen"; break;;
+    '2')echo "$wait Option 2 chosen"; break;;
+    '3')echo "$wait Option 3 chosen"; break;;
     *)echo "Invalid option chosen, Please try again...";;
     esac
     done
@@ -188,7 +211,7 @@ ask_user_to_select()
 take_vars_from_existing_repo()
 {
     if [[ $selection == '1' ]]; then
-    dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" | grep 'gist' | sed 's/.*\///g')
+    dir="$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" | perl -p -e 's/\r//g' | grep 'gist' | sed 's/.*\///g')"
     gist_url="https://$git_token@gist.github.com/$dir"
     fi
 }
@@ -202,8 +225,8 @@ ask_playlist_type()
     read -p "Select from the options above: " playlist_type;
     while true; do
     case $playlist_type in
-    '1')echo "Option 1 chosen"; break;;
-    '2')echo "Option 2 chosen"; break;;
+    '1')echo "$wait Option 1 chosen"; break;;
+    '2')echo "$wait Option 2 chosen"; break;;
     *)echo "Invalid option chosen, Please try again...";;
     esac
     done
@@ -213,7 +236,7 @@ ask_playlist_type()
 start()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
-    packages='curl gh expect python3 python3-pip'
+    packages='curl gh expect python3 python3-pip dos2unix'
     for package in $packages; do
     dpkg -s $package > /dev/null 2>&1 || initiate_setup;
     done
@@ -225,7 +248,7 @@ start()
     
     
     elif [[ $OSTYPE == 'linux-android'* ]]; then
-    packages='gh expect python ncurses-utils gettext'
+    packages='gh expect python ncurses-utils gettext dos2unix'
     for package in $packages; do
     dpkg -s $package > /dev/null 2>&1 || initiate_setup;
     done
@@ -271,45 +294,68 @@ dynamic_push()
     fi
 }
 
+star_repo() {
+    curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
+}
+
 ## Main script
 main()
 {
     extract_git_vars;
+    git config --global core.autocrlf false
     git config --global user.name "$git_id"
     git config --global user.email "$git_mail"
     check_if_repo_exists;
-    git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV; } 
+    echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the type of nework connection you have..."
+    git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
     cd Tata-Sky-IPTV/code_samples/
-    mv $LOCALDIR/userDetails.json .
-    if [[ $playlist_type == '2' ]]; then git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1; fi
+    cp -frp $LOCALDIR/userDetails.json .
+    if [[ "$playlist_type" == '2' ]]; then echo "$wait Selected Playlist Type: Kodi & Tivimate Compatible"; git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1; fi
     cat $LOCALDIR/dependencies/post_script.exp > script.exp
     chmod 755 script.exp
-    ./script.exp
+    echo "$wait Generating M3U File..."
+    python3 utils.py
     echo "$git_token" >> mytoken.txt
-    gh auth login --with-token < mytoken.txt
+    echo "$wait Logging in with your GitHub account..."
+    gh auth login --with-token < mytoken.txt >> /dev/null 2>&1
     rm mytoken.txt script.exp
     cd ..
-    create_gist;
-    take_vars_from_existing_repo;
-    mkdir -p $LOCALDIR/Tata-Sky-IPTV/.github/workflows && cd $LOCALDIR/Tata-Sky-IPTV/.github/workflows
+    create_gist >> /dev/null 2>&1
+    take_vars_from_existing_repo >> /dev/null 2>&1
+    mkdir -p $LOCALDIR/Tata-Sky-IPTV/.github/workflows; cd $LOCALDIR/Tata-Sky-IPTV/.github/workflows; 
     export dir=$dir
     export gist_url=$gist_url
     export git_id=$git_id
     export git_token=$git_token
     export git_mail=$git_mail
     cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
+    dos2unix Tata-Sky-IPTV-Daily.yml >> /dev/null 2>&1
     cd ../..
     echo "code_samples/__pycache__" > .gitignore && echo "allChannelPlaylist.m3u" >> .gitignore && echo "userSubscribedChannels.json" >> .gitignore
     git remote remove origin
-    git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git"
-    dynamic_push;
-    git clone ${gist_url} >> /dev/null 2>&1
-    cd ${dir} && rm allChannelPlaylist.m3u && mv ../code_samples/allChannelPlaylist.m3u .
+    git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
+    dynamic_push >> /dev/null 2>&1;
+    git clone $gist_url >> /dev/null 2>&1
+    cd $dir; rm allChannelPlaylist.m3u; mv ../code_samples/allChannelPlaylist.m3u .
     git add .
-    git commit -m "Initial Playlist Upload"
+    git commit -m "Initial Playlist Upload" >> /dev/null 2>&1;
+    echo "$wait Pushing the repository to your account, This might take a while depending upon the Network Connection..."
     git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
     save_creds;
-    tput setaf 43; echo "Successfully created your new private repo." && printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
+    printf '\n\n'
+    tput setaf 43; echo "Hooray! Successfully created your new private repo.";
+    while true; do
+    read -p "$wait Would you like to star 'TataSky-Playlist-AutoUpdater' Script? (It really motivates me to do more cool stuffs, So do consider it by typing 'y'): " read_star;
+    case $read_star in
+        Y|y) echo "$wait You've chosen \"Yes\". Thank You."; star_repo; break;
+        ;;
+        N|n) echo "$wait You've chosen \"No\". "; break;
+        ;;
+        *) echo "Invalid selection, Please try again..."
+        ;;
+    esac
+    done
+    printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
     if [[ "$selection" == '2' ]]; then tput setaf 43; echo -e "Check your other playlist branch here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily/tree/$dir"; fi
     tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
@@ -321,6 +367,6 @@ main()
     rm -rf $LOCALDIR/Tata-Sky-IPTV;
     echo "Press Enter to exit."; read junk;
     tput setaf init;
+    exit 1;
 }
 start;
-
