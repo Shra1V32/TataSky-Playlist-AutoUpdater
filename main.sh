@@ -139,7 +139,7 @@ initiate_setup()
 save_creds()
 {
     if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
-    echo "Saving usercreds so that you don't have to login again..."
+    echo "$wait Saving usercreds so that you don't have to login again..."
     printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ngit_token=\'$git_token\'\n" > $LOCALDIR/.usercreds
     fi
 }
@@ -150,10 +150,16 @@ ask_direct_login()
     if [[ -f "$LOCALDIR/userDetails.json" ]]; then
     read -p "File userDetails.json already exists, Would you like to take all the required data from it? (y/n): " response;
     if [[ "$response" == 'y' ]]; then
+    read -p " Enter your GitHub Token: " git_token;
+    extract_git_vars;
+    source source;
+    if [[ "$name" != '' ]]; then
+    tput setaf 43; echo Welcome, $name.; tput init;
+    fi
     ask_playlist_type;
     main;
     elif [[ "$response" == 'n' ]]; then
-    #rm userDetails.json
+    mv userDetails.json .userDetails.json 
     start && main;
     else
     echo "Invalid option chosen, Try again..." && ask_direct_login;
@@ -199,10 +205,14 @@ ask_user_to_select()
     while true; do
     read -p "Select from the options above: " selection
     case $selection in
-    '1')echo "$wait Option 1 chosen"; break;;
-    '2')echo "$wait Option 2 chosen"; break;;
-    '3')echo "$wait Option 3 chosen"; break;;
-    *)echo "Invalid option chosen, Please try again...";;
+        '1') echo "$wait Option 1 chosen"; break
+        ;;
+        '2') echo "$wait Option 2 chosen"; break
+        ;;
+        '3') echo "$wait Option 3 chosen"; break
+        ;;
+        *) echo "Invalid option chosen, Please try again..."
+        ;;
     esac
     done
 }
@@ -219,15 +229,18 @@ take_vars_from_existing_repo()
 ## Ask user for the playlist 
 ask_playlist_type()
 {
-    printf "\nWhich type of playlist would you like to have? \n\n"
-    echo "  1. Kodi & Tivimate Compatible"
-    printf "  2. Tivimate & OTT Navigator Compatible\n\n"
+    printf "\nWhich type of playlist would you like to have? (Both are Tivimate compatible)\n\n"
+    echo "  1. Kodi Compatible"
+    printf "  2. OTT Navigator Compatible\n\n"
     read -p "Select from the options above: " playlist_type;
     while true; do
     case $playlist_type in
-    '1')echo "$wait Option 1 chosen"; break;;
-    '2')echo "$wait Option 2 chosen"; break;;
-    *)echo "Invalid option chosen, Please try again...";;
+    '1') echo "$wait Option 1 chosen"; break
+    ;;
+    '2') echo "$wait Option 2 chosen"; break
+    ;;
+    *) echo "Invalid option chosen, Please try again..."
+    ;;
     esac
     done
 }
@@ -267,6 +280,7 @@ create_gist()
 {
     if [[ $selection == "2" || $repo_exists == 'false' || $selection == '3' ]]; then
     echo "Initial Test" >> allChannelPlaylist.m3u
+    echo "$wait Uploading the playlist to Gist..."
     gh gist create allChannelPlaylist.m3u | tee gist_link.txt >> /dev/null 2>&1
     sed -i "s/gist/$git_token@gist/g" gist_link.txt
     gist_url=$(cat gist_link.txt)
@@ -306,7 +320,7 @@ main()
     git config --global user.name "$git_id"
     git config --global user.email "$git_mail"
     check_if_repo_exists;
-    echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the type of nework connection you have..."
+    echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the nework connection you have..."
     git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
     cd Tata-Sky-IPTV/code_samples/
     cp -frp $LOCALDIR/userDetails.json .
@@ -332,6 +346,7 @@ main()
     dos2unix Tata-Sky-IPTV-Daily.yml >> /dev/null 2>&1
     cd ../..
     echo "code_samples/__pycache__" > .gitignore && echo "allChannelPlaylist.m3u" >> .gitignore && echo "userSubscribedChannels.json" >> .gitignore
+    echo "$wait Preparing to push your personal private repository to your account..."
     git remote remove origin
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
     dynamic_push >> /dev/null 2>&1;
@@ -355,15 +370,16 @@ main()
         ;;
     esac
     done
-    printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
+    printf '\n\n'
+    tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
+    tput setaf 43; echo -e "Credits: ${NC}Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
+    tput setaf 43; echo -e "My Github Profile: ${NC}https://github.com/Shra1V32"
+    printf '\n\n'
+    tput setaf 43; printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n" && tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
     if [[ "$selection" == '2' ]]; then tput setaf 43; echo -e "Check your other playlist branch here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily/tree/$dir"; fi
     tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
     tput setaf 43; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
-    tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
-    tput setaf 43; echo "Credits: Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
-    tput setaf 43; echo "My Github Profile: https://github.com/Shra1V32"
-    printf '\n\n'
     rm -rf $LOCALDIR/Tata-Sky-IPTV;
     echo "Press Enter to exit."; read junk;
     tput setaf init;
