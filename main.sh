@@ -248,6 +248,7 @@ ask_playlist_type()
 ## Start Script
 start()
 {
+    git pull https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater.git
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
     packages='curl gh expect python3 python3-pip dos2unix'
     for package in $packages; do
