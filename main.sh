@@ -14,8 +14,6 @@ info()
     printf "\n * This Script is for Automatically generating the Tata Sky M3U Playlists Everyday keep the Playlist URL Constant, It's only your IPTV Player which needs to refresh for every 24 Hrs. I would like to thank Gaurav Thakkar sincerely for his work on Playlist Generator. \n* Enter only valid information \n\nNow, Get ready to dwell into this journey. \n"
     echo "-------------------------------------------------"
     tput sgr0;
-    curl -s "https://raw.githubusercontent.com/ForceGT/Tata-Sky-IPTV/master/code_samples/constants.py" > constants.py &
-    curl -s "https://raw.githubusercontent.com/ForceGT/Tata-Sky-IPTV/master/code_samples/login.py" > login.py &
     echo "Please Enter the required details below to proceed further: "
     echo " "
 }

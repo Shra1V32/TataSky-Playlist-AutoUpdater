@@ -1,6 +1,6 @@
 .usercreds
-*.py
 __pycache__/
 Tata-Sky-IPTV/
 source
 userDetails.json
+.userDetails.json
