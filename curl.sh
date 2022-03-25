@@ -5,6 +5,7 @@ git clone https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater || { rm -rf T
 cd TataSky-Playlist-AutoUpdater;
 ./main.sh
 elif [[ $OSTYPE == 'linux-gnu'* ]]; then
+sudo apt install git
 git clone https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater || { rm -rf TataSky-Playlist-AutoUpdater; git clone https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater; }
 cd TataSky-Playlist-AutoUpdater;
 ./main.sh
