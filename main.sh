@@ -104,10 +104,8 @@ initiate_setup()
     printf "Please Enter your password to proceed with the setup: "
     sudo echo '' > /dev/null 2>&1
     sudo apt update
-    sudo apt install python3.9 expect dos2unix -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-    python3.9 get-pip.py
-    pip3.9 install requests
+    sudo apt install python3 expect dos2unix -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+    pip3 install requests
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
     sudo apt update
@@ -256,7 +254,6 @@ start()
     clear
     tput setaf 43; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
     info;
-    python='python3.9'
     take_vars;
     
     
@@ -268,7 +265,6 @@ start()
     clear
     tput setaf 43; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
     info;
-    python='python3'
     take_vars;
     else
     echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
