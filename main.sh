@@ -246,6 +246,7 @@ ask_playlist_type()
 ## Start Script
 start()
 {
+    if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' ]]; then
     git pull https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater.git
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
     packages='curl gh expect python3 python3-pip dos2unix'
@@ -271,6 +272,9 @@ start()
     take_vars;
     else
     echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
+    fi
+    else
+    echo -e "${RED}Please run the script from the local directory.${NC}"; exit 1;
     fi
 }
 
