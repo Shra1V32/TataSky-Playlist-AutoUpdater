@@ -11,7 +11,7 @@ info()
     printf "\nAuthor: Shra1V32\n"
     echo "GitHub Profile: https://github.com/Shra1V32"
     printf '\n'
-    printf "\n * This Script is for Automatically generating the Tata Sky M3U Playlists Everyday keep the Playlist URL Constant, It's only your IPTV Player which needs to refresh for every 24 Hrs. I would like to thank Gaurav Thakkar sincerely for his work on Playlist Generator. \n* Enter only valid information \n\nNow, Get ready to dwell into this journey. \n"
+    printf "\n * This Script is for Automatically generating the Tata Sky M3U Playlists Everyday keep the Playlist URL Constant, It's only your IPTV Player which needs to refresh for every 24 Hrs. I would like to thank Gaurav Thakkar sincerely for his work on Playlist Generator. \n* Enter only valid information \n\n"
     echo "-------------------------------------------------"
     tput sgr0;
     echo "Please Enter the required details below to proceed further: "
@@ -65,6 +65,11 @@ send_otp()
     if [[ "$login_otp" == *'Please enter valid OTP.'* ]]; then
     echo -e "${RED} Please enter a valid OTP.${NC}"
     read_otp;
+
+    elif [[ "$login_otp" == *'Login is not permitted'* ]]; then
+    echo $login_otp;
+    echo "$wait Try once again..."
+    send_otp;
     fi
     }
     read_otp;
@@ -104,7 +109,7 @@ initiate_setup()
     printf "Please Enter your password to proceed with the setup: "
     sudo echo '' > /dev/null 2>&1
     sudo apt update
-    sudo apt install python3 expect dos2unix -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+    sudo apt install python3 expect dos2unix python3-pip -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
     pip3 install requests
     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
@@ -181,7 +186,10 @@ ask_direct_login()
 ## Check if the repo exists
 check_if_repo_exists()
 {
-    check_repo=$(curl -i -s -H "Authorization: token $git_token"     https://api.github.com/user/repos | grep 'TataSkyIPTV-Daily') || true
+    echo "$git_token" > mytoken.txt
+    gh auth login --with-token < mytoken.txt >> /dev/null 2>&1
+    rm mytoken.txt
+    check_repo=$(gh repo list | grep 'TataSkyIPTV-Daily') || true
     if [[ -n $check_repo ]]; then
     repo_exists='true'
     ask_user_to_select;
@@ -226,8 +234,9 @@ take_vars_from_existing_repo()
 ask_playlist_type()
 {
     printf "\nWhich type of playlist would you like to have? (Both are Tivimate compatible)\n\n"
-    echo "  1. Kodi Compatible"
-    printf "  2. OTT Navigator Compatible\n\n"
+    echo "  1. Kodi-Compatible"
+    printf "  2. OTT-Navigator-Compatible\n\n"
+    while true; do
     read -p "Select from the options above: " playlist_type;
     while true; do
     case $playlist_type in
@@ -323,15 +332,13 @@ main()
     git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
     cd Tata-Sky-IPTV/code_samples/
     cp -frp $LOCALDIR/userDetails.json .
-    if [[ "$playlist_type" == '2' ]]; then echo "$wait Selected Playlist Type: Kodi & Tivimate Compatible"; git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1; fi
+    if [[ "$playlist_type" == '2' ]]; then echo "$wait Selected Playlist Type: OTT-Navigator-Compatible"; git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1; fi
     cat $LOCALDIR/dependencies/post_script.exp > script.exp
     chmod 755 script.exp
     echo "$wait Generating M3U File..."
     python3 utils.py
-    echo "$git_token" >> mytoken.txt
     echo "$wait Logging in with your GitHub account..."
-    gh auth login --with-token < mytoken.txt >> /dev/null 2>&1
-    rm mytoken.txt script.exp
+    rm script.exp
     cd ..
     create_gist >> /dev/null 2>&1
     take_vars_from_existing_repo >> /dev/null 2>&1
