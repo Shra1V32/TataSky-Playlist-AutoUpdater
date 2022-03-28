@@ -278,7 +278,7 @@ ask_playlist_type()
 start()
 {
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' ]]; then
-        git pull https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater.git
+        git pull --rebase
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
             packages='curl gh expect python3 python3-pip dos2unix'
 
