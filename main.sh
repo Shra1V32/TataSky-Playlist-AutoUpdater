@@ -2,7 +2,6 @@
 LOCALDIR=$(pwd)
 RED='\033[0;31m'
 NC='\033[0m'
-wait=$(tput setaf 57; echo -e "[◆]${NC}")
 
 # Print info
 info()
@@ -27,6 +26,8 @@ take_input()
     if [[ "$name" != '' ]]; then
         tput setaf 43; echo Welcome, $name.; tput init;
     fi
+    read -p " Enter your Tata Sky Subscriber ID: " sub_id;
+    read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
     send_otp;
 }
 
@@ -51,8 +52,6 @@ take_input()
 # Send OTP using the TSky creds
 send_otp()
 {
-    read -p " Enter your Tata Sky Subscriber ID: " sub_id;
-    read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
     send_otp_data=$(curl -s "https://kong-tatasky.videoready.tv/rest-api/pub/api/v1/rmn/$tata_mobile/otp");
     if [[ "$send_otp_data" == *"\"code\":1008"* ]]; then
         printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
@@ -70,6 +69,11 @@ send_otp()
             echo $login_otp;
             echo "$wait Try once again..."
             send_otp;
+        elif [[ "$login_otp" == *"Logged in successfully."* ]]; then
+            echo "$wait Logged in successfully."
+        else
+            echo "Some other error occured, Please check & try again."
+            exit 1;
         fi
     }
     read_otp;
@@ -250,7 +254,7 @@ take_vars_from_existing_repo()
         | perl -p -e 's/\r//g' \
         | grep 'gist' \
         | sed 's/.*\///g')"
-
+        if [[ "$dir" == "" ]]; then echo "Failed to fetch information from existing repo, Try running the script again..."; exit 1; fi
         gist_url="https://$git_token@gist.github.com/$dir"
     fi
 }
@@ -278,7 +282,7 @@ ask_playlist_type()
 start()
 {
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' ]]; then
-        git pull --rebase
+        if [[ "$1" != "test" ]]; then git pull --rebase; fi
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
             packages='curl gh expect python3 python3-pip dos2unix'
 
@@ -286,7 +290,7 @@ start()
                 dpkg -s $package > /dev/null 2>&1 || initiate_setup;
             done
 
-            clear
+            wait=$(tput setaf 57; echo -e "[◆]${NC}")
             tput setaf 43; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
             info;
             take_vars;
@@ -298,6 +302,7 @@ start()
                 dpkg -s $package > /dev/null 2>&1 || initiate_setup;
             done
             
+            wait=$(tput setaf 57; echo -e "[◆]${NC}")
             clear
             tput setaf 43; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
             info;
@@ -424,4 +429,4 @@ main()
     tput setaf init;
     exit 1;
 }
-start;
+start "$1";
