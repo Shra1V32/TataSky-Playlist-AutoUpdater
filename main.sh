@@ -196,9 +196,16 @@ ask_direct_login()
         read -p "File .usercreds already exists, Would you like to take all the inputs from it? (y/n): " response;
         if [[ "$response" == 'y' ]]; then
             source $LOCALDIR/.usercreds
-            send_otp;
-            ask_playlist_type;
-            main;
+            check_if_repo_exists;
+            if [[ "$selection" != '1' ]]; then
+                send_otp;
+                ask_playlist_type;
+                main;
+            else
+                ask_playlist_type;
+                send_otp;
+                main;
+            fi
         elif [[ "$response" == 'n' ]]; then
             rm .usercreds;
             start && main;
@@ -227,9 +234,9 @@ check_if_repo_exists()
 ask_user_to_select()
 {
     printf "\n Repo named 'TataSkyIPTV-Daily' already exists, What would you like to perform? \n\n"
-    echo "   1. Re-run the script & Update my repo with same playlist."
-    echo "   2. Maintain other playlist with another Tata Sky Account"
-    echo "   3. Generate new playlist with new link"
+    echo "   1. Re-run the script & Update my repo with same playlist. (Your repo will be updated with current login details)"
+    echo "   2. Maintain other playlist with another Tata Sky Account (Maintain multiple playlists)"
+    echo "   3. Generate new playlist with new link (Overridden with your new playlist)"
     printf '\n'
     while true; do
         read -p "Select from the options above: " selection
@@ -254,7 +261,7 @@ take_vars_from_existing_repo()
         | perl -p -e 's/\r//g' \
         | grep 'gist' \
         | sed 's/.*\///g')"
-        if [[ "$dir" == "" ]]; then echo "Failed to fetch information from existing repo, Try running the script again..."; exit 1; fi
+        if [[ -z "$dir" ]]; then echo -e "${RED}Failed to fetch information from existing repo, Try running the script again...${NC}"; exit 1; fi
         gist_url="https://$git_token@gist.github.com/$dir"
     fi
 }
@@ -291,6 +298,7 @@ start()
             done
 
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
+            clear;
             tput setaf 43; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
             info;
             take_vars;
@@ -359,7 +367,7 @@ main()
     git config --global core.autocrlf false
     git config --global user.name "$git_id"
     git config --global user.email "$git_mail"
-    check_if_repo_exists;
+    if [[ -z "$selection" ]]; then check_if_repo_exists; fi
     echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the nework connection you have..."
     git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
     cd Tata-Sky-IPTV/code_samples/
@@ -376,7 +384,7 @@ main()
     rm script.exp
     cd ..
     create_gist >> /dev/null 2>&1
-    take_vars_from_existing_repo >> /dev/null 2>&1
+    take_vars_from_existing_repo;
     mkdir -p $LOCALDIR/Tata-Sky-IPTV/.github/workflows; cd $LOCALDIR/Tata-Sky-IPTV/.github/workflows; 
     export dir=$dir
     export gist_url=$gist_url
