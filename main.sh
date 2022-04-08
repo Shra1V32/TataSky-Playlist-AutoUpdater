@@ -112,8 +112,8 @@ extract_git_vars()
 
     curl -s -H "Authorization: token $git_token" \
     "https://api.github.com/user" \
-    | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') \
-    | grep 'name' \
+    |& set -x source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') \
+    |& set +x grep 'name' \
     | head -n1 > source && cat source \
     | sed "s#=#=\'#g" \
     | sed "s/$/\'/g" > $LOCALDIR/source
@@ -126,6 +126,26 @@ extract_git_vars()
     | sed 's/email://g')
 }
 
+check_storage_access()
+{
+    ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} Please give storage access to the Termux App ${NC}"; termux-setup-storage; ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} You've denied the permission${NC}"; echo -e "${RED} Please grant files access manually to proceed further...${NC}"; exit 1; } }
+}
+
+export_log(){
+    if [[ "$OSTYPE" == 'linux-android'* ]];then
+        android='true'
+        check_storage_access;
+        set -x
+        exec 5> /sdcard/TataSky-AutoUpdater-debug.log
+        PS4='$LINENO: ' 
+        BASH_XTRACEFD="5"
+    elif [[ "$OSTYPE" == 'linux-gnu'* ]];then
+        set -x
+        exec 5> $LOCALDIR/debug.log
+        PS4='$LINENO: ' 
+        BASH_XTRACEFD="5"
+    fi
+}
 # Make Setup
 initiate_setup()
 {
@@ -437,4 +457,6 @@ main()
     tput setaf init;
     exit 1;
 }
+export_log;
+clear;
 start "$1";
