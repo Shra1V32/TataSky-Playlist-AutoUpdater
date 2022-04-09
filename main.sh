@@ -26,9 +26,13 @@ take_input()
     if [[ "$name" != '' ]]; then
         tput setaf 43; echo Welcome, $name.; tput init;
     fi
+    take_tsky_vars;
+    send_otp;
+}
+
+take_tsky_vars(){
     read -p " Enter your Tata Sky Subscriber ID: " sub_id;
     read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
-    send_otp;
 }
 
 # validate_otp()
@@ -55,6 +59,7 @@ send_otp()
     send_otp_data=$(curl -s "https://kong-tatasky.videoready.tv/rest-api/pub/api/v1/rmn/$tata_mobile/otp");
     if [[ "$send_otp_data" == *"\"code\":1008"* ]]; then
         printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
+        take_tsky_vars;
         send_otp;
     fi
     echo "OTP Sent successfully"
@@ -196,6 +201,7 @@ ask_direct_login()
     if [[ -f "$LOCALDIR/userDetails.json" ]]; then
         read -p "File userDetails.json already exists, Would you like to take all the required data from it? (y/n): " response;
         if [[ "$response" == 'y' ]]; then
+            if [[ -f "$LOCALDIR/.usercreds" ]]; then source $LOCALDIR/.usercreds; fi
             read -p " Enter your GitHub Token: " git_token;
             extract_git_vars;
             source source;
@@ -346,7 +352,7 @@ start()
 # Make a new gist
 create_gist()
 {
-    if [[ $selection == "2" || $repo_exists == 'false' || $selection == '3' ]]; then
+    if [[ "$selection" == "2" || "$repo_exists" == 'false' || "$selection" == '3' ]]; then
         echo "Initial Test" >> allChannelPlaylist.m3u
         echo "$wait Uploading the playlist to Gist..."
         gh gist create allChannelPlaylist.m3u | tee gist_link.txt >> /dev/null 2>&1
@@ -362,15 +368,16 @@ create_gist()
 dynamic_push()
 {
     git add .
-    git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
     if [[ "$selection" == "1" || "$selection" == '3' ]]; then
+        git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
         git branch -M main
         git push -f --set-upstream origin main;
-    elif [[ "$selection" == "2" ]]; then
-        branch_name=$(echo "$dir" | cut -c 1-6)
-        git branch -M $branch_name
-        git push -f --set-upstream origin $branch_name
+    elif [[ "$selection" == "2" && "$repo_exists" == 'true' ]]; then
+        git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "AutoUpdater: Start maintaining another playlist"
+        git branch -M main
+        git push -f --set-upstream origin main
     elif [[ "$repo_exists" == 'false' ]]; then
+        git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "Adapt Repo for auto-loop"
         git branch -M main
         git push --set-upstream origin main
     fi
@@ -378,6 +385,7 @@ dynamic_push()
 
 star_repo() {
     curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
+    curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV
 }
 
 # Main script
@@ -388,42 +396,62 @@ main()
     git config --global user.name "$git_id"
     git config --global user.email "$git_mail"
     if [[ -z "$selection" ]]; then check_if_repo_exists; fi
-    echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the nework connection you have..."
-    git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
-    cd Tata-Sky-IPTV/code_samples/
-    cp -frp $LOCALDIR/userDetails.json .
-    if [[ "$playlist_type" == '2' ]]; then
-        echo "$wait Selected Playlist Type: OTT-Navigator-Compatible"
-        git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1
+    if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
+        git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily; }  
+        cd TataSkyIPTV-Daily/code_samples;
+        cp -frp $LOCALDIR/userDetails.json .
+        python3 utils.py
+        echo "$wait Logging in with your GitHub account..."
+        cd ..
+        create_gist >> /dev/null 2>&1
+        branch_name=$(echo "$dir" | cut -c 1-6)
+        cd code_samples; mv userDetails.json $branch_name.json
+        curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/code_samples/userDetails.json" > userDetails.json
+        cd $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/
+    else
+        echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the nework connection you have..."
+        git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
+        cd Tata-Sky-IPTV/code_samples/
+        cp -frp $LOCALDIR/userDetails.json .
+        if [[ "$playlist_type" == '2' ]]; then
+            echo "$wait Selected Playlist Type: OTT-Navigator-Compatible"
+            git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1
+        fi
+        cat $LOCALDIR/dependencies/post_script.exp > script.exp
+        chmod 755 script.exp
+        echo "$wait Generating M3U File..."
+        python3 utils.py
+        echo "$wait Logging in with your GitHub account..."
+        rm script.exp
+        cd ..
+        create_gist >> /dev/null 2>&1
+        take_vars_from_existing_repo;
+        mkdir -p $LOCALDIR/Tata-Sky-IPTV/.github/workflows; cd $LOCALDIR/Tata-Sky-IPTV/.github/workflows;
     fi
-    cat $LOCALDIR/dependencies/post_script.exp > script.exp
-    chmod 755 script.exp
-    echo "$wait Generating M3U File..."
-    python3 utils.py
-    echo "$wait Logging in with your GitHub account..."
-    rm script.exp
-    cd ..
-    create_gist >> /dev/null 2>&1
-    take_vars_from_existing_repo;
-    mkdir -p $LOCALDIR/Tata-Sky-IPTV/.github/workflows; cd $LOCALDIR/Tata-Sky-IPTV/.github/workflows; 
     export dir=$dir
     export gist_url=$gist_url
     export git_id=$git_id
     export git_token=$git_token
     export git_mail=$git_mail
-    cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
+    export branch_name=$branch_name # We export only for selection 2 & repo_exists=true
+    if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
+        if [[ "$(cat -e Tata-Sky-IPTV-Daily.yml | tail -n1 | rev | cut -c 1-1 | rev)" != '$' ]]; then printf '\n' >> Tata-Sky-IPTV-Daily.yml; fi
+        cat $LOCALDIR/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
+    else
+        cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
+    fi
     dos2unix Tata-Sky-IPTV-Daily.yml >> /dev/null 2>&1
     cd ../..
     echo "code_samples/__pycache__" > .gitignore && echo "allChannelPlaylist.m3u" >> .gitignore && echo "userSubscribedChannels.json" >> .gitignore
-    echo "$wait Preparing to push your personal private repository to your account..."
     git remote remove origin
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
+    echo "$wait Pushing your personal private repository to your account..."
     dynamic_push >> /dev/null 2>&1;
     git clone $gist_url >> /dev/null 2>&1
     cd $dir; rm allChannelPlaylist.m3u; mv ../code_samples/allChannelPlaylist.m3u .
     git add .
     git commit -m "Initial Playlist Upload" >> /dev/null 2>&1;
-    echo "$wait Pushing the repository to your account, This might take a while depending upon the Network Connection..."
+    echo "$wait Pushing the playlist to your account..."
     git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
     save_creds;
     printf '\n\n'
@@ -446,9 +474,6 @@ main()
     printf '\n\n'
     tput setaf 43; printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
     tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
-    if [[ "$selection" == '2' ]]; then 
-        tput setaf 43; echo -e "Check your other playlist branch here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily/tree/$dir"
-    fi
     tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
     tput setaf 43; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
