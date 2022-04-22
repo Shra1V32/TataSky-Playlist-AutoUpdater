@@ -28,6 +28,7 @@ take_input()
     fi
     take_tsky_vars;
     send_otp;
+    save_creds; # Save creds after every inputs are verified
 }
 
 take_tsky_vars(){
@@ -133,7 +134,7 @@ extract_git_vars()
 
 check_storage_access()
 {
-    ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} Please give storage access to the Termux App ${NC}"; termux-setup-storage; ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} You've denied the permission${NC}"; echo -e "${RED} Please grant files access manually to proceed further...${NC}"; exit 1; } }
+    ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} Please give storage access to the Termux App ${NC}"; termux-setup-storage; sleep 5s; ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} You've denied the permission${NC}"; echo -e "${RED} Please grant files access manually to proceed further...${NC}"; exit 1; } }
 }
 
 export_log(){
@@ -186,6 +187,25 @@ initiate_setup()
 
 }
 
+# Function to delete playlist & Gist (A lil' better workarounds are needed)
+delete_playlist(){
+    find_line=$(cat $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml | grep -n "$dir" | head -n1 | cut -f1 -d:) # This might be a dirty workaround to delete/stop maintaining the other playlists -_-
+    start_line=$(($find_line - 3)) # Start line as we grep with the dir, then minus the line by 3, which has the string 'cd ..''
+    end_line=$(($find_line + 6)) # End line to delete upto it
+    if [[ "$(cat $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml | sed -n ${start_line}p)" == *'cd ..' ]]; then
+        sed -i "${start_line},${end_line}d" $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml
+        cd $LOCALDIR/TataSkyIPTV-Daily/
+        git add .
+        git commit -m "AutoUpdater: Stop maintaining $dir playlist" >> /dev/null 2>&1
+        git push >> /dev/null 2>&1 || echo -e "{RED}Something went wrong while pushing with option 4"
+        gh gist delete "$dir" || echo "Looks like playlist has been deleted already" # More checks needed, Will be implemented in near future
+    else
+        echo "$error Only playlists sideloaded among the main playlist can be deleted, Main playlist cannot be deleted"
+        echo "$error Please try again..."
+        delete_which_playlist;
+    fi
+}
+
 # Save creds to .usercreds file for future use
 save_creds()
 {
@@ -223,13 +243,9 @@ ask_direct_login()
         if [[ "$response" == 'y' ]]; then
             source $LOCALDIR/.usercreds
             check_if_repo_exists;
-            if [[ "$selection" != '1' ]]; then
+            if [[ "$selection" != '2' ]]; then
                 send_otp;
                 ask_playlist_type;
-                main;
-            else
-                ask_playlist_type;
-                send_otp;
                 main;
             fi
         elif [[ "$response" == 'n' ]]; then
@@ -241,7 +257,7 @@ ask_direct_login()
     fi
 }
 
-# Check if the repo exists
+# Check if the repo exists (called by ask_direct_login)
 check_if_repo_exists()
 {
     echo "$git_token" > mytoken.txt
@@ -251,6 +267,13 @@ check_if_repo_exists()
     if [[ -n $check_repo ]]; then
         repo_exists='true'
         ask_user_to_select;
+        if [[ "$selection" == '3' ]]; then
+            dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n1|rev | cut -f1 -d/)
+            gh gist delete $dir || true  # Delete the gist when option 3 is selected as the playlist url becomes obsolete anyway
+        elif [[ "$selection" == '2' ]]; then
+            take_tsky_vars
+            send_otp
+        fi
     else
         repo_exists='false'
     fi
@@ -263,6 +286,7 @@ ask_user_to_select()
     echo "   1. Re-run the script & Update my repo with same playlist. (Your repo will be updated with current login details)"
     echo "   2. Maintain other playlist with another Tata Sky Account (Maintain multiple playlists)"
     echo "   3. Generate new playlist with new link (Overridden with your new playlist)"
+    echo "   4. Delete one of my multiple playlist (Main playlist cannot be deleted with this option)"
     printf '\n'
     while true; do
         read -p "Select from the options above: " selection
@@ -272,6 +296,8 @@ ask_user_to_select()
             '2') echo "$wait Option 2 chosen"; break
             ;;
             '3') echo "$wait Option 3 chosen"; break
+            ;;
+            '4') echo "$wait Option 4 chosen"; main; break # Skip to main directly, As we are not really making playlist here
             ;;
             *) echo "Invalid option chosen, Please try again..."
             ;;
@@ -324,6 +350,7 @@ start()
             done
 
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
+            error=$(tput setaf 9; echo -e  "[⚠]${NC}")
             clear;
             tput setaf 43; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
             info;
@@ -388,6 +415,23 @@ star_repo() {
     curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV
 }
 
+count_channels(){
+    number_of_channels=$(curl -s "$1" | grep -o 'EXTINF' | wc -l) # Counts out number of channels in the playlist
+}
+
+delete_which_playlist(){
+    for (( i=1; i<=$number_of_playlists_maintained; i++)); do  # Lists out all the available gist dirs found in the .yml file
+        dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
+        count_channels "https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u"
+        echo "$i. $dir with $number_of_channels channels"
+    done
+    read -p "Select which playlist to delete: " deletion_num
+    dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n$deletion_num | tail -n1 |rev | cut -f1 -d/ | rev)
+    delete_playlist # More checks/Better implementation needed
+    echo "$wait Playlist has been deleted successfully"
+    exit 1;
+}
+
 # Main script
 main()
 {
@@ -397,7 +441,8 @@ main()
     git config --global user.email "$git_mail"
     if [[ -z "$selection" ]]; then check_if_repo_exists; fi
     if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
-        git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily; }  
+        echo "$wait Cloning your personal repo..."
+        git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }  
         cd TataSkyIPTV-Daily/code_samples;
         cp -frp $LOCALDIR/userDetails.json .
         python3 utils.py
@@ -408,6 +453,18 @@ main()
         cd code_samples; mv userDetails.json $branch_name.json
         curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/code_samples/userDetails.json" > userDetails.json
         cd $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/
+    elif [[ "$repo_exists" == 'true' && "$selection" == '4' ]]; then # Only this part should be executed when selection is '4'
+        number_of_playlists_maintained=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o 'gist.github' | wc -l) || true
+        if [[ "$number_of_playlists_maintained" != '1' ]]; then # Don't pass to 'delete_which_playlist' function, if the number of playlist counts to '1', As we don't delete the main playlist using this anyway
+            git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }  &
+            cd TataSkyIPTV-Daily/code_samples;
+            printf '\n'
+            echo "Number of playlists currently maintained: $number_of_playlists_maintained"
+            delete_which_playlist;
+        else
+            echo "$ No multiple playlists found, Exiting...";
+            exit 1;
+        fi
     else
         echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the nework connection you have..."
         git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
@@ -415,7 +472,7 @@ main()
         cp -frp $LOCALDIR/userDetails.json .
         if [[ "$playlist_type" == '2' ]]; then
             echo "$wait Selected Playlist Type: OTT-Navigator-Compatible"
-            git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1
+            git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1 # Won't work in multiple-playlists btw
         fi
         cat $LOCALDIR/dependencies/post_script.exp > script.exp
         chmod 755 script.exp
@@ -437,6 +494,11 @@ main()
     if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
         if [[ "$(cat -e Tata-Sky-IPTV-Daily.yml | tail -n1 | rev | cut -c 1-1 | rev)" != '$' ]]; then printf '\n' >> Tata-Sky-IPTV-Daily.yml; fi
         cat $LOCALDIR/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
+        # echo "
+        #       multi_playlist=true
+        #       dir=$dir
+        #       gist_url=$gist_url
+        #       branch_name=$branch_name" >> $LOCALDIR/TataSkyIPTV-Daily/code_samples/playlist.details # Save these details just in case we need them in future, not needed for now
     else
         cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
     fi
@@ -453,7 +515,6 @@ main()
     git commit -m "Initial Playlist Upload" >> /dev/null 2>&1;
     echo "$wait Pushing the playlist to your account..."
     git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
-    save_creds;
     printf '\n\n'
     tput setaf 43; echo "Hooray! Successfully created your new private repo.";
     while true; do
@@ -474,6 +535,8 @@ main()
     printf '\n\n'
     tput setaf 43; printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
     tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
+    tput setaf 43; printf "Your playlist expires at:${NC} $(date -d @$(cat $LOCALDIR/userDetails.json | cut -c 67-79)| rev | cut -c 6- | rev)\n" # Print out even the expiry date
+    tput setaf 43; printf "\nYou need to run this script again after this date with Option 1\n"
     tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
     tput setaf 43; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
