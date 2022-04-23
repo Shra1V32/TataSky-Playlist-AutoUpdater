@@ -160,7 +160,7 @@ initiate_setup()
         printf "Please Enter your password to proceed with the setup: "
         sudo echo '' > /dev/null 2>&1
         sudo apt update
-        sudo apt install python3 expect dos2unix python3-pip -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+        sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
         pip3 install requests
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
@@ -172,7 +172,7 @@ initiate_setup()
         if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
             echo "$wait Please wait while the installation takes place..."
             apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
-            pkg install git gh ncurses-utils expect python gettext dos2unix -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+            pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
             pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
             echo "Installation done successfully!"
         else
@@ -343,7 +343,7 @@ start()
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' ]]; then
         if [[ "$1" != "test" ]]; then git pull --rebase; fi
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
-            packages='curl gh expect python3 python3-pip dos2unix'
+            packages='curl gh expect python3 python3-pip dos2unix perl'
 
             for package in $packages; do
                 dpkg -s $package > /dev/null 2>&1 || initiate_setup;
@@ -357,7 +357,7 @@ start()
             take_vars;
     
         elif [[ $OSTYPE == 'linux-android'* ]]; then
-            packages='gh expect python ncurses-utils gettext dos2unix'
+            packages='gh expect python ncurses-utils gettext dos2unix perl'
 
             for package in $packages; do
                 dpkg -s $package > /dev/null 2>&1 || initiate_setup;
