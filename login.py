@@ -130,7 +130,7 @@ def lookupSid(rmn):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--otp", type=int, help="OTP for Login", required=True)
+    parser.add_argument("--otp", type=str, help="OTP for Login", required=True)
     parser.add_argument("--sid", type=int, help="The Subscriber ID for login", required=True)
     parser.add_argument("--rmn", type=int, help="The Registered Mobile Number for login", required=True)
     args = parser.parse_args()
