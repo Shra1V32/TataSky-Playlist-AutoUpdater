@@ -21,8 +21,8 @@ Generate new token > Give all the permissions > save it somewhere securely.
 
 ## Compatibility:
 * Linux
-* Termux App from [Fdroid](https://f-droid.org/en/packages/com.termux/)
-* Windows Subsystem for Linux
+* Termux App from [Fdroid](https://f-droid.org/en/packages/com.termux/) (Android Device)
+* Windows Subsystem for Linux (Windows PC)
 
 ## How to use?
 * Copy the below script and paste it in the terminal:
@@ -53,7 +53,7 @@ All the steps above are to be done only once. Please Star my repo if you've like
 
 ## Explanation on how this works
 
-This works purely on the basis of GitHub Workflow Actions, So a VERY BIG THANKS to GitHub.
+This works on the basis of GitHub Workflow Actions.
 I've created the script where Actions will automatically trigger the workflow every day for 2:30 AM IST.
 
 The tokens, GitHub Email, and ID are required because we are basically creating another repo and gists with this script using them.
@@ -67,6 +67,12 @@ The tokens, GitHub Email, and ID are required because we are basically creating 
 * GitHub for their GitHub Actions
 * Manohar Kumar for continuos testing
 
+## License and Disclosures
+
+This code is just a CASE STUDY on how the authentication mechanism and live streaming using IPTV works
+I am in no way responsible if you misuse the code and cause revenue loss to the concerned parties and owners of the portal
+
+This code is protected under the [MIT](https://opensource.org/licenses/MIT) license
 
 
 

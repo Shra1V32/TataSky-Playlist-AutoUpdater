@@ -1,7 +1,10 @@
 #!/bin/bash -e
-LOCALDIR=$(pwd)
-RED='\033[0;31m'
-NC='\033[0m'
+export white_bg='\033[7m'
+export LOCALDIR=$(pwd)
+export RED='\033[0;31m'
+export NC='\033[0m'
+export WHITE='\033[7m'
+export lines=$(($(tput lines)+2))
 
 # Print info
 info()
@@ -15,6 +18,122 @@ info()
     tput sgr0;
     echo "Please Enter the required details below to proceed further: "
     echo " "
+}
+
+print_lines(){
+    lines=$(tput cols)
+    for ((i=0; i<$lines; i++)); do printf '-'; done
+    printf '\n'
+}
+
+print_spaces(){
+    for ((i=0; i<$(( ($lines-29)/2)); i++)); do
+    printf "$white_bg "
+    done
+
+    printf "$(tput bold)TataPlay Playlist AutoUpdater"
+
+    for ((i=0; i<=$(( ($lines-29)/2)); i++)); do
+    printf "$white_bg "
+    done
+
+    for ((i=0; i<$(( ($lines-10)/2)); i++)); do
+    printf "$white_bg "
+    done
+
+    printf "[7m[3mby Shravan[0m"
+
+    for ((i=0; i<$(( ($lines-10)/2)); i++)); do
+    printf "$white_bg "
+    done
+    tput sgr0;
+}
+
+case_banner(){
+    set +x
+    for (( i=0; i<$lines; i++));  do     printf '\n';     done;  echo [H
+    printf "\n"
+    cat dyn_banner
+    # echo -e "$white_bg$(tput bold)${white_bg}TataPlay Playlist AutoUpdater${NC}"
+    # echo -e "[7m[3mby Shravan[0m"
+    check_login
+    printf '\n'
+    set -x
+}
+
+check_login(){
+    if [[ -f "$LOCALDIR/.usercreds" && -f "$LOCALDIR/userDetails.json" ]]; then
+        isLoggedIn='true'
+        source $LOCALDIR/.usercreds
+        printf "[0m[34mLOGIN STATUS: "
+        tput setaf 48; printf "True${NC}\n"
+        printf "[0m[34mSUBSCRIBER ID: [0m[32m$sub_id[0m\n"
+        printf "[0m[34mRMN: [0m[32m$tata_mobile[0m\n"
+    elif [[ -f "$LOCALDIR/.usercreds" && ! -f "$LOCALDIR/userDetails.json" ]]; then
+        echo "$wait No userDetails.json found, Sending OTP to login..."
+        source $LOCALDIR/.usercreds
+        send_otp;
+        isLoggedIn='true'
+        case_banner
+    else
+        isLoggedIn='false'
+        printf "[0m[34mLOGIN STATUS: "
+        printf "${RED}False${NC}\n"
+    fi
+}
+
+case_helper(){
+    case_banner;
+    echo -e "[0m[31m[43mMain Menu${NC}"
+    printf "\n"
+    echo "1) Login using RMN & OTP"
+    echo "2) Manage my M3U playlists"
+    echo "3) Build my Auto Updater"
+    echo "4) Exit"
+    echo " "
+    printf "Make your selection: "
+    while true; do
+        read -N 1 -s -r case_helper_choice
+        case $case_helper_choice in
+            1) printf "\n"; case_banner; echo "$wait You've chosen \"Login using RMN & OTP\"";
+            take_input
+            case_helper
+            break
+            ;;
+
+            2) printf "\n"; case_banner; echo "$wait You've chosen to \"Manage my playlists\""
+            if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
+            source "$LOCALDIR/.usercreds"
+            check_if_repo_exists
+            if [[ "$repo_exists" == 'false' ]]; then case_banner; printf "${RED}Repository not found${NC}\nMake sure that you've run option 3 to Build your own AutoUpdater before selecting this option\n"; menu_exit; fi
+            main
+            break;
+            ;;
+
+            3) printf "\n"; case_banner; echo "$wait You've chosen to \"Build my Auto Updater\"";
+            if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
+            source "$LOCALDIR/.usercreds" && ls $LOCALDIR/userDetails.json > /dev/null 2>&1 || { echo  "Something went wrong"; exit 1; }
+            check_if_repo_exists || true
+            main
+            break;
+            ;;
+
+            4) printf "\n"; menu_exit;
+        esac
+    done
+        
+}
+
+menu_exit(){
+    printf '\n'; echo -e "[0m[32mPress \"q\" to Quit, or \"r\" to Restart[0m"; trap 2; read -N 1 -s -r quit_resp; trap '' 2;
+    case $quit_resp in
+    'q') exit 1;
+    ;;
+    'r') case_helper;
+    ;;
+    *) exit 1
+    ;;
+    esac
 }
 
 # Take inputs
@@ -57,14 +176,38 @@ take_tsky_vars(){
 # Send OTP using the TSky creds
 send_otp()
 {
-    send_otp_data=$(curl -s "https://kong-tatasky.videoready.tv/rest-api/pub/api/v1/rmn/$tata_mobile/otp");
+    send_otp_data=$(curl -s 'https://tm.tapi.videoready.tv/rest-api/pub/api/v2/generate/otp' \
+    -H 'authority: tm.tapi.videoready.tv' \
+    -H 'accept: */*' \
+    -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
+    -H 'content-type: application/json' \
+    -H 'device_details: {"pl":"web","os":"WINDOWS","lo":"en-us","app":"1.36.21","dn":"PC","bv":101,"bn":"CHROME","device_id":"nkdvk1941cbv2icfgjxjjos113d6euws","device_type":"WEB","device_platform":"PC","device_category":"open","manufacturer":"WINDOWS_CHROME_101","model":"PC","sname":""}' \
+    -H 'locale: ENG' \
+    -H 'origin: https://watch.tataplay.com' \
+    -H 'platform: web' \
+    -H 'referer: https://watch.tataplay.com/' \
+    -H 'sec-fetch-dest: empty' \
+    -H 'sec-fetch-mode: cors' \
+    -H 'sec-fetch-site: cross-site' \
+    -H 'sec-gpc: 1' \
+    -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.41 Safari/537.36' \
+    --data-raw "{\"sid\":\"$sub_id\",\"rmn\":\"$tata_mobile\"}" \
+    --compressed);
+
     if [[ "$send_otp_data" == *"\"code\":1008"* ]]; then
         printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
         take_tsky_vars;
         send_otp;
+    elif [[ "$send_otp_data" == *"\"code\":1008"* ]]; then printf
+        printf "\nSubscriber ID cannot be left empty"
+        menu_exit;
     fi
     echo "OTP Sent successfully"
-    read_otp()
+    read_otp;
+}
+
+# Read & Validate OTP
+read_otp()
     {
         read -p " Enter the OTP Received: " tata_otp;
         login_otp=$(python3 login.py --otp "$tata_otp" --sid "$sub_id" --rmn "$tata_mobile")
@@ -82,8 +225,6 @@ send_otp()
             exit 1;
         fi
     }
-    read_otp;
-}
 
 # Ask user whether to take data from .usercreds file or userDetails.json
 take_vars()
@@ -113,7 +254,7 @@ extract_git_vars()
     | tr -d '":, ')
 
     if [ -z "$git_id" ]; then 
-        echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; take_vars;
+        echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; take_input;
     fi
 
     curl -s -H "Authorization: token $git_token" \
@@ -138,6 +279,7 @@ check_storage_access()
 }
 
 export_log(){
+    { curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; exit 1; }
     if [[ "$OSTYPE" == 'linux-android'* ]];then
         android='true'
         check_storage_access;
@@ -152,10 +294,14 @@ export_log(){
         BASH_XTRACEFD="5"
     fi
 }
+
 # Make Setup
 initiate_setup()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
+        echo "[H[2J[3J[38;5;43m"
+        curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+        echo -e "${NC}"
         echo "$wait Please wait while the one-time-installation takes place..."
         printf "Please Enter your password to proceed with the setup: "
         sudo echo '' > /dev/null 2>&1
@@ -170,6 +316,9 @@ initiate_setup()
     
     elif [[ $OSTYPE == 'linux-android'* ]]; then
         if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
+            echo "[H[2J[3J[38;5;43m"
+            curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+            echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
             apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
             pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
@@ -194,9 +343,10 @@ delete_playlist(){
     end_line=$(($find_line + 6)) # End line to delete upto it
     if [[ "$(cat $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml | sed -n ${start_line}p)" == *'cd ..' ]]; then
         sed -i "${start_line},${end_line}d" $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml
+        rm $LOCALDIR/TataSkyIPTV-Daily/code_samples/$(echo "$dir" | cut -c 1-6).json
         cd $LOCALDIR/TataSkyIPTV-Daily/
         git add .
-        git commit -m "AutoUpdater: Stop maintaining $dir playlist" >> /dev/null 2>&1
+        git commit -m "AutoUpdater: Stop maintaining $(echo "$dir" | cut -c 1-6) playlist" >> /dev/null 2>&1
         git push >> /dev/null 2>&1 || echo -e "{RED}Something went wrong while pushing with option 4"
         gh gist delete "$dir" || echo "Looks like playlist has been deleted already" # More checks needed, Will be implemented in near future
     else
@@ -209,10 +359,7 @@ delete_playlist(){
 # Save creds to .usercreds file for future use
 save_creds()
 {
-    if [[ ! -f "$LOCALDIR/.usercreds" ]]; then
-        echo "$wait Saving usercreds so that you don't have to login again..."
-        printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ngit_token=\'$git_token\'\n" > $LOCALDIR/.usercreds
-    fi
+    printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ngit_token=\'$git_token\'\ngit_mail=\'$git_mail\'\ngit_id=\'$git_id\'\n" > $LOCALDIR/.usercreds
 }
 
 # Ask direct login if .usercreds file exists
@@ -264,15 +411,12 @@ check_if_repo_exists()
     gh auth login --with-token < mytoken.txt >> /dev/null 2>&1
     rm mytoken.txt
     check_repo=$(gh repo list | grep 'TataSkyIPTV-Daily') || true
-    if [[ -n $check_repo ]]; then
+    if [[ -n $check_repo && isCalledByCaseHelper != 'true' && $(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml") != *'404: Not Found' ]]; then
         repo_exists='true'
         ask_user_to_select;
         if [[ "$selection" == '3' ]]; then
             dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n1|rev | cut -f1 -d/)
             gh gist delete $dir || true  # Delete the gist when option 3 is selected as the playlist url becomes obsolete anyway
-        elif [[ "$selection" == '2' ]]; then
-            take_tsky_vars
-            send_otp
         fi
     else
         repo_exists='false'
@@ -282,14 +426,18 @@ check_if_repo_exists()
 # Prompt user with certain options in case the repo 'TataSkyIPTV-Daily' repo exists already.
 ask_user_to_select()
 {
-    printf "\n Repo named 'TataSkyIPTV-Daily' already exists, What would you like to perform? \n\n"
-    echo "   1. Re-run the script & Update my repo with same playlist. (Your repo will be updated with current login details)"
-    echo "   2. Maintain other playlist with another Tata Sky Account (Maintain multiple playlists)"
-    echo "   3. Generate new playlist with new link (Overridden with your new playlist)"
-    echo "   4. Delete one of my multiple playlist (Main playlist cannot be deleted with this option)"
+    case_banner;
+    printf "\n Please Select from the options below: \n\n"
+    echo "   1) Re-run the script & Update my repo with same playlist. (Your repo will be updated with current login details)"
+    echo "   2) Maintain other playlist with another Tata Sky Account (Maintain multiple playlists)"
+    echo "   3) Generate new playlist with new link (Overridden with your new playlist)"
+    echo "   4) Delete one of my multiple playlist (Main playlist cannot be deleted with this option)"
+    echo "   [33mm = Main Menu[0m"
+    echo -e "   [0m[35mq = Quit${NC}"
     printf '\n'
     while true; do
-        read -p "Select from the options above: " selection
+        printf "Selection: "
+        read -N 1 -s -r selection
         case $selection in
             '1') echo "$wait Option 1 chosen"; break
             ;;
@@ -298,6 +446,10 @@ ask_user_to_select()
             '3') echo "$wait Option 3 chosen"; break
             ;;
             '4') echo "$wait Option 4 chosen"; main; break # Skip to main directly, As we are not really making playlist here
+            ;;
+            'm') case_helper; break;
+            ;;
+            'q') menu_exit; break;
             ;;
             *) echo "Invalid option chosen, Please try again..."
             ;;
@@ -341,38 +493,20 @@ ask_playlist_type()
 start()
 {
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' ]]; then
-        if [[ "$1" != "test" ]]; then git pull --rebase; fi
+        if [[ "$1" != "--test" ]]; then git pull --rebase > /dev/null 2>&1 || echo -e "${RED} Something went wrong, Try running the script from GitHub Again...${NC}" ;fi
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
-            packages='curl gh expect python3 python3-pip dos2unix perl'
-
-            for package in $packages; do
-                dpkg -s $package > /dev/null 2>&1 || initiate_setup;
-            done
-
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
-            error=$(tput setaf 9; echo -e  "[⚠]${NC}")
-            clear;
-            tput setaf 43; curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
-            info;
-            take_vars;
+            
     
         elif [[ $OSTYPE == 'linux-android'* ]]; then
-            packages='gh expect python ncurses-utils gettext dos2unix perl'
-
-            for package in $packages; do
-                dpkg -s $package > /dev/null 2>&1 || initiate_setup;
-            done
-            
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
-            clear
-            tput setaf 43; curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
-            info;
-            take_vars;
+            # tput setaf 43; cat $LOCALDIR/banner_linux-android|| { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+            # info;
         else
             echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
         fi
     else
-        echo -e "${RED}Please run the script from the local directory.${NC}"; exit 1;
+        echo -e "${RED}Please run the script from the cloned directory.${NC}"; exit 1;
     fi
 }
 
@@ -400,7 +534,7 @@ dynamic_push()
         git branch -M main
         git push -f --set-upstream origin main;
     elif [[ "$selection" == "2" && "$repo_exists" == 'true' ]]; then
-        git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "AutoUpdater: Start maintaining another playlist"
+        git commit --author="Shra1V32<namanageshwar@outlook.com>" -m "AutoUpdater: Start maintaining $(echo "$dir" | cut -c 1-6) playlist"
         git branch -M main
         git push -f --set-upstream origin main
     elif [[ "$repo_exists" == 'false' ]]; then
@@ -413,6 +547,22 @@ dynamic_push()
 star_repo() {
     curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
     curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV
+}
+
+check_dependencies(){
+    if [[ $OSTYPE == 'linux-gnu'* ]]; then
+        packages='curl gh expect python3 python3-pip dos2unix perl'
+
+        for package in $packages; do
+            dpkg -s $package > /dev/null 2>&1 || initiate_setup;
+        done
+    elif [[ $OSTYPE == 'linux-android'* ]]; then
+        packages='gh expect python ncurses-utils gettext dos2unix perl'
+
+        for package in $packages; do
+            dpkg -s $package > /dev/null 2>&1 || initiate_setup;
+        done
+    fi
 }
 
 count_channels(){
@@ -429,7 +579,7 @@ delete_which_playlist(){
     dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n$deletion_num | tail -n1 |rev | cut -f1 -d/ | rev)
     delete_playlist # More checks/Better implementation needed
     echo "$wait Playlist has been deleted successfully"
-    exit 1;
+    case_helper;
 }
 
 # Main script
@@ -439,7 +589,6 @@ main()
     git config --global core.autocrlf false
     git config --global user.name "$git_id"
     git config --global user.email "$git_mail"
-    if [[ -z "$selection" ]]; then check_if_repo_exists; fi
     if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
         echo "$wait Cloning your personal repo..."
         git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }  
@@ -456,14 +605,15 @@ main()
     elif [[ "$repo_exists" == 'true' && "$selection" == '4' ]]; then # Only this part should be executed when selection is '4'
         number_of_playlists_maintained=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o 'gist.github' | wc -l) || true
         if [[ "$number_of_playlists_maintained" != '1' ]]; then # Don't pass to 'delete_which_playlist' function, if the number of playlist counts to '1', As we don't delete the main playlist using this anyway
-            git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }  &
+            echo "$wait Cloning your personal repo..."
+            git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }
             cd TataSkyIPTV-Daily/code_samples;
             printf '\n'
             echo "Number of playlists currently maintained: $number_of_playlists_maintained"
             delete_which_playlist;
         else
-            echo "$ No multiple playlists found, Exiting...";
-            exit 1;
+            echo " No multiple playlists found, Aborting...";
+            case_helper;
         fi
     else
         echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the nework connection you have..."
@@ -517,17 +667,7 @@ main()
     git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
     printf '\n\n'
     tput setaf 43; echo "Hooray! Successfully created your new private repo.";
-    while true; do
-        read -p "$wait Would you like to star 'TataSky-Playlist-AutoUpdater' Script? (It really motivates me to do more cool stuffs, So do consider it by typing 'y'): " read_star;
-        case $read_star in
-            Y|y) echo "$wait You've chosen \"Yes\". Thank You."; star_repo; break;
-            ;;
-            N|n) echo "$wait You've chosen \"No\". "; break;
-            ;;
-            *) echo "Invalid selection, Please try again..."
-            ;;
-        esac
-    done
+    star_repo;
     printf '\n\n'
     tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
     tput setaf 43; echo -e "Credits: ${NC}Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
@@ -535,7 +675,7 @@ main()
     printf '\n\n'
     tput setaf 43; printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
     tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
-    tput setaf 43; printf "Your playlist expires at:${NC} $(date -d @$(cat $LOCALDIR/userDetails.json | cut -c 67-79)| rev | cut -c 6- | rev)\n" # Print out even the expiry date
+    tput setaf 43; printf "Your playlist expires on:${NC} $(date -d @$(cat $LOCALDIR/userDetails.json | cut -c 67-76)| rev | cut -c 6- | rev | cut -c 1-10)\n" # Print out even the expiry date
     tput setaf 43; printf "\nYou need to run this script again after this date with Option 1\n"
     tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
@@ -543,8 +683,14 @@ main()
     rm -rf $LOCALDIR/Tata-Sky-IPTV;
     echo "Press Enter to exit."; read junk;
     tput setaf init;
-    exit 1;
+    menu_exit;
 }
 export_log;
 clear;
+check_dependencies;
+set +x
+{ print_lines; print_spaces; print_lines; } > dyn_banner
+set -x
 start "$1";
+echo "Loading..."
+case_helper
