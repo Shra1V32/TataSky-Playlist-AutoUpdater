@@ -136,10 +136,15 @@ menu_exit(){
     esac
 }
 
+read_git_token(){
+    read -p " Enter your GitHub Token: " git_token;
+    extract_git_vars;
+}
+
 # Take inputs
 take_input()
 {
-    read -p " Enter your GitHub Token: " git_token;
+    read_git_token
     extract_git_vars;
     source source;
     if [[ "$name" != '' ]]; then
@@ -220,6 +225,7 @@ read_otp()
             send_otp;
         elif [[ "$login_otp" == *"Logged in successfully."* ]]; then
             echo "$wait Logged in successfully."
+            sleep 0.90s
         else
             echo "Some other error occured, Please check & try again."
             exit 1;
@@ -254,7 +260,7 @@ extract_git_vars()
     | tr -d '":, ')
 
     if [ -z "$git_id" ]; then 
-        echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; take_input;
+        echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; read_git_token;
     fi
 
     curl -s -H "Authorization: token $git_token" \
@@ -279,7 +285,7 @@ check_storage_access()
 }
 
 export_log(){
-    { curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; exit 1; }
+    { git pull --rebase; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; exit 1; }
     if [[ "$OSTYPE" == 'linux-android'* ]];then
         android='true'
         check_storage_access;
@@ -691,6 +697,6 @@ check_dependencies;
 set +x
 { print_lines; print_spaces; print_lines; } > dyn_banner
 set -x
-start "$1";
 echo "Loading..."
+start "$1";
 case_helper
