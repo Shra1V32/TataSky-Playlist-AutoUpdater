@@ -75,4 +75,10 @@ I am in no way responsible if you misuse the code and cause revenue loss to the 
 This code is protected under the [MIT](https://opensource.org/licenses/MIT) license
 
 
+# Wanna buy me a Coffee? 😊
+Support me by donating!
 
+## UPI: 
+```text
+vadeghar.shravan@okicici
+```

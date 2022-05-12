@@ -6,5 +6,5 @@
             mv *.m3u ${dir}/
             cd ${dir}
             git add .
-            git commit -m "Playlist has been updated"
-            git push
+            git commit --amend -m "Playlist has been updated"
+            git push -f

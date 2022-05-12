@@ -28,10 +28,10 @@ print_lines(){
 
 print_spaces(){
     for ((i=0; i<$(( ($lines-29)/2)); i++)); do
-    printf "$white_bg "
+    printf "$(tput bold)$white_bg "
     done
 
-    printf "$(tput bold)TataPlay Playlist AutoUpdater"
+    printf "TataPlay Playlist AutoUpdater"
 
     for ((i=0; i<=$(( ($lines-29)/2)); i++)); do
     printf "$white_bg "
@@ -41,18 +41,17 @@ print_spaces(){
     printf "$white_bg "
     done
 
-    printf "[7m[3mby Shravan[0m"
+    printf "$(tput sitm)by Shravan${NC}"
 
     for ((i=0; i<$(( ($lines-10)/2)); i++)); do
-    printf "$white_bg "
+    printf "$(tput bold)$white_bg "
     done
     tput sgr0;
 }
 
 case_banner(){
     set +x
-    for (( i=0; i<$lines; i++));  do     printf '\n';     done;  echo [H
-    printf "\n"
+    for (( i=0; i<$lines; i++));  do     printf '\n';     done;  echo "[H"
     cat dyn_banner
     # echo -e "$white_bg$(tput bold)${white_bg}TataPlay Playlist AutoUpdater${NC}"
     # echo -e "[7m[3mby Shravan[0m"
@@ -69,6 +68,7 @@ check_login(){
         tput setaf 48; printf "True${NC}\n"
         printf "[0m[34mSUBSCRIBER ID: [0m[32m$sub_id[0m\n"
         printf "[0m[34mRMN: [0m[32m$tata_mobile[0m\n"
+        printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n"
     elif [[ -f "$LOCALDIR/.usercreds" && ! -f "$LOCALDIR/userDetails.json" ]]; then
         echo "$wait No userDetails.json found, Sending OTP to login..."
         source $LOCALDIR/.usercreds
@@ -79,6 +79,7 @@ check_login(){
         isLoggedIn='false'
         printf "[0m[34mLOGIN STATUS: "
         printf "${RED}False${NC}\n"
+        printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n"
     fi
 }
 
@@ -285,7 +286,7 @@ check_storage_access()
 }
 
 export_log(){
-    { git pull --rebase; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; exit 1; }
+    if [[ ! -f ".itsme" ]]; then { git pull --rebase; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; exit 1; } fi
     if [[ "$OSTYPE" == 'linux-android'* ]];then
         android='true'
         check_storage_access;
@@ -323,7 +324,8 @@ initiate_setup()
     elif [[ $OSTYPE == 'linux-android'* ]]; then
         if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
             echo "[H[2J[3J[38;5;43m"
-            curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+            curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+            echo " By Shravan: https://github.com/Shra1V32"
             echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
             apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
@@ -447,7 +449,18 @@ ask_user_to_select()
         case $selection in
             '1') echo "$wait Option 1 chosen"; break
             ;;
-            '2') echo "$wait Option 2 chosen"; break
+            '2') echo "$wait Option 2 chosen";
+                while true; do
+                    read -p "Would you like to perform the this operation with current login information? (y/n) " perform_operation;
+                    case $perform_operation in
+                        'y') true; break
+                        ;;
+                        'n') true; rm $LOCALDIR/.usercreds; case_helper; break
+                        ;;
+                        *) echo Invalid selection, Please try again
+                        ;;
+                    esac
+                done
             ;;
             '3') echo "$wait Option 3 chosen"; break
             ;;
@@ -498,7 +511,7 @@ ask_playlist_type()
 # Start Script
 start()
 {
-    if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' ]]; then
+    if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' || -f .itsme ]]; then
         if [[ "$1" != "--test" ]]; then git pull --rebase > /dev/null 2>&1 || echo -e "${RED} Something went wrong, Try running the script from GitHub Again...${NC}" ;fi
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
