@@ -68,7 +68,7 @@ check_login(){
         tput setaf 48; printf "True${NC}\n"
         printf "[0m[34mSUBSCRIBER ID: [0m[32m$sub_id[0m\n"
         printf "[0m[34mRMN: [0m[32m$tata_mobile[0m\n"
-        printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n"
+        printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n${NC}"
     elif [[ -f "$LOCALDIR/.usercreds" && ! -f "$LOCALDIR/userDetails.json" ]]; then
         echo "$wait No userDetails.json found, Sending OTP to login..."
         source $LOCALDIR/.usercreds
@@ -79,7 +79,7 @@ check_login(){
         isLoggedIn='false'
         printf "[0m[34mLOGIN STATUS: "
         printf "${RED}False${NC}\n"
-        printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n"
+        printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n${NC}"
     fi
 }
 
@@ -90,7 +90,8 @@ case_helper(){
     echo "1) Login using RMN & OTP"
     echo "2) Manage my M3U playlists"
     echo "3) Build my Auto Updater"
-    echo "4) Exit"
+    echo "4) Logout"
+    echo "5) Exit"
     echo " "
     printf "Make your selection: "
     while true; do
@@ -113,13 +114,20 @@ case_helper(){
 
             3) printf "\n"; case_banner; echo "$wait You've chosen to \"Build my Auto Updater\"";
             if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
-            source "$LOCALDIR/.usercreds" && ls $LOCALDIR/userDetails.json > /dev/null 2>&1 || { echo  "Something went wrong"; exit 1; }
+            source "$LOCALDIR/.usercreds" && ls $LOCALDIR/userDetails.json > /dev/null 2>&1 || { echo  "Something went wrong"; exit 0; }
             check_if_repo_exists || true
             main
             break;
             ;;
 
-            4) printf "\n"; menu_exit;
+            4) printf '\n'; case_banner; echo "$wait You've chosen to Logout from TataSky & GitHub";
+            { rm $LOCALDIR/.usercreds $LOCALDIR/userDetails.json >> /dev/null 2>&1; } || { echo -e "$wait ${RED}You're not logged in to select this task${NC}"; menu_exit; break; }
+            sleep 1.5s; echo "$wait Task Completed"
+            menu_exit;
+            break;
+            ;;
+
+            5) printf "\n"; menu_exit;
         esac
     done
         
@@ -128,11 +136,11 @@ case_helper(){
 menu_exit(){
     printf '\n'; echo -e "[0m[32mPress \"q\" to Quit, or \"r\" to Restart[0m"; trap 2; read -N 1 -s -r quit_resp; trap '' 2;
     case $quit_resp in
-    'q') exit 1;
+    'q') set +x; exit 0;
     ;;
     'r') case_helper;
     ;;
-    *) exit 1
+    *) set +x; exit 0
     ;;
     esac
 }
@@ -204,8 +212,8 @@ send_otp()
         printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
         take_tsky_vars;
         send_otp;
-    elif [[ "$send_otp_data" == *"\"code\":1008"* ]]; then printf
-        printf "\nSubscriber ID cannot be left empty"
+    elif [[ "$send_otp_data" == *"\"code\":1002"* ]]; then
+        printf "${RED}\nSubscriber ID cannot be left empty${NC}"
         menu_exit;
     fi
     echo "OTP Sent successfully"
@@ -229,7 +237,7 @@ read_otp()
             sleep 0.90s
         else
             echo "Some other error occured, Please check & try again."
-            exit 1;
+            exit 0;
         fi
     }
 
@@ -282,11 +290,12 @@ extract_git_vars()
 
 check_storage_access()
 {
-    ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} Please give storage access to the Termux App ${NC}"; termux-setup-storage; sleep 5s; ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} You've denied the permission${NC}"; echo -e "${RED} Please grant files access manually to proceed further...${NC}"; exit 1; } }
+    ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} Please give storage access to the Termux App ${NC}"; termux-setup-storage; sleep 5s; ls /sdcard/ >> /dev/null 2>&1 || { echo -e "${RED} You've denied the permission${NC}"; echo -e "${RED} Please grant files access manually to proceed further...${NC}"; exit 0; } }
 }
 
 export_log(){
-    if [[ ! -f ".itsme" ]]; then { git pull --rebase; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; exit 1; } fi
+    git pull --rebase >> /dev/null 2>&1 || true
+    if [[ ! -f ".itsme" ]]; then { git pull --rebase >> /dev/null 2>&1; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh;set +x; exit 0 & ./main.sh; } fi
     if [[ "$OSTYPE" == 'linux-android'* ]];then
         android='true'
         check_storage_access;
@@ -307,13 +316,13 @@ initiate_setup()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
         echo "[H[2J[3J[38;5;43m"
-        curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+        curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
         echo -e "${NC}"
         echo "$wait Please wait while the one-time-installation takes place..."
         printf "Please Enter your password to proceed with the setup: "
         sudo echo '' > /dev/null 2>&1
         sudo apt update
-        sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+        sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
         pip3 install requests
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
@@ -324,20 +333,20 @@ initiate_setup()
     elif [[ $OSTYPE == 'linux-android'* ]]; then
         if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
             echo "[H[2J[3J[38;5;43m"
-            curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+            curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
             echo " By Shravan: https://github.com/Shra1V32"
             echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
             apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
-            pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
-            pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 1; }
+            pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
+            pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             echo "Installation done successfully!"
         else
             echo -e "Please use Latest Termux release, i.e, from FDroid (https://f-droid.org/en/packages/com.termux/)";
-            exit 1;
+            exit 0;
         fi
     else
-        echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
+        echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 0;
     fi
     
     touch .setupinitiated
@@ -440,6 +449,7 @@ ask_user_to_select()
     echo "   2) Maintain other playlist with another Tata Sky Account (Maintain multiple playlists)"
     echo "   3) Generate new playlist with new link (Overridden with your new playlist)"
     echo "   4) Delete one of my multiple playlist (Main playlist cannot be deleted with this option)"
+    echo "   5) Delete my 'TataSkyIPTV-Daily' repo"
     echo "   [33mm = Main Menu[0m"
     echo -e "   [0m[35mq = Quit${NC}"
     printf '\n'
@@ -466,6 +476,8 @@ ask_user_to_select()
             ;;
             '4') echo "$wait Option 4 chosen"; main; break # Skip to main directly, As we are not really making playlist here
             ;;
+            '5') echo "$wait Option 5 chosen"; printf '\n'; gh repo delete TataSkyIPTV-Daily; menu_exit; break;
+            ;;
             'm') case_helper; break;
             ;;
             'q') menu_exit; break;
@@ -484,7 +496,7 @@ take_vars_from_existing_repo()
         | perl -p -e 's/\r//g' \
         | grep 'gist' \
         | sed 's/.*\///g')"
-        if [[ -z "$dir" ]]; then echo -e "${RED}Failed to fetch information from existing repo, Try running the script again...${NC}"; exit 1; fi
+        if [[ -z "$dir" ]]; then echo -e "${RED}Failed to fetch information from existing repo, Try running the script again...${NC}"; exit 0; fi
         gist_url="https://$git_token@gist.github.com/$dir"
     fi
 }
@@ -511,21 +523,22 @@ ask_playlist_type()
 # Start Script
 start()
 {
+    if [[ "$1" != './main.sh' ]]; then clear; printf "${RED} Wrong usage, Run using:\n./main.sh${NC}\n"; exit 0; fi
+    if [[ ! -f ".itsme" ]]; then { git restore $LOCALDIR/.; git pull --rebase; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh; exit & ./main.sh; } fi
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' || -f .itsme ]]; then
-        if [[ "$1" != "--test" ]]; then git pull --rebase > /dev/null 2>&1 || echo -e "${RED} Something went wrong, Try running the script from GitHub Again...${NC}" ;fi
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
             
     
         elif [[ $OSTYPE == 'linux-android'* ]]; then
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
-            # tput setaf 43; cat $LOCALDIR/banner_linux-android|| { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 1; }
+            # tput setaf 43; cat $LOCALDIR/banner_linux-android|| { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
             # info;
         else
-            echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 1;
+            echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 0;
         fi
     else
-        echo -e "${RED}Please run the script from the cloned directory.${NC}"; exit 1;
+        echo -e "${RED}Please run the script from the cloned directory.${NC}"; exit 0;
     fi
 }
 
@@ -683,7 +696,7 @@ main()
     git add .
     git commit -m "Initial Playlist Upload" >> /dev/null 2>&1;
     echo "$wait Pushing the playlist to your account..."
-    git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 1; }
+    git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 0; }
     printf '\n\n'
     tput setaf 43; echo "Hooray! Successfully created your new private repo.";
     star_repo;
@@ -711,5 +724,5 @@ set +x
 { print_lines; print_spaces; print_lines; } > dyn_banner
 set -x
 echo "Loading..."
-start "$1";
+start "$0";
 case_helper
