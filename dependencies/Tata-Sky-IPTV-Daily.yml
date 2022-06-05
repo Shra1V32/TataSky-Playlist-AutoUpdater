@@ -19,7 +19,7 @@ jobs:
             cd TataSkyIPTV-Daily/
             cd code_samples/
             curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/dependencies/post_script.exp' > script.exp &
-            curl -s 'https://raw.githubusercontent.com/ForceGT/Tata-Sky-IPTV/master/code_samples/allChannels.json' > allChannels.json
+            curl -s 'https://gist.githubusercontent.com/Shra1V32/ee918d53b2f0b65888809ba85f0e0183/raw/allChannels.json' > allChannels.json
             chmod 755 *
             sudo apt install expect -y
             ./script.exp
