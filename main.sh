@@ -21,7 +21,6 @@ info()
 }
 
 print_lines(){
-    lines=$(tput cols)
     for ((i=0; i<$lines; i++)); do printf '-'; done
     printf '\n'
 }
@@ -721,7 +720,12 @@ export_log;
 printf "\033[H\033[2J"
 check_dependencies;
 set +x
-{ print_lines; print_spaces; print_lines; } > dyn_banner
+dump_banner(){
+    lines=$(tput cols)
+    { print_lines; print_spaces; print_lines; } > $LOCALDIR/dyn_banner
+}
+dump_banner
+trap dump_banner WINCH
 set -x
 echo "Loading..."
 start "$0";
