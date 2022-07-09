@@ -1,10 +1,14 @@
 #!/bin/bash -e
+
+# Copyright (C) 2022 Shra1V32 <namanageshwar@outlook.com>
+#        GitHub: https://github.com/Shra1V32
+
 export white_bg='\033[7m'
 export LOCALDIR=$(pwd)
 export RED='\033[0;31m'
 export NC='\033[0m'
 export WHITE='\033[7m'
-export lines=$(($(tput lines)+2))
+declare -x lines
 
 # Print info
 info()
@@ -51,7 +55,7 @@ print_spaces(){
 case_banner(){
     set +x
     printf "\033[H\033[2J"
-    cat dyn_banner
+    cat $LOCALDIR/dyn_banner
     # echo -e "$white_bg$(tput bold)${white_bg}TataPlay Playlist AutoUpdater${NC}"
     # echo -e "[7m[3mby Shravan[0m"
     check_login
@@ -59,15 +63,20 @@ case_banner(){
     set -x
 }
 
+print_playlist_type(){
+    [[ -f ~/.config/.ottnavigator ]] && { printf "[0m[32mOTT Navigator | Tivimate\n"; playlist_type='2'; } || { printf "[0m[32mKodi | Tivimate\n"; playlist_type='1'; }
+}
+
 check_login(){
     if [[ -f "$LOCALDIR/.usercreds" && -f "$LOCALDIR/userDetails.json" ]]; then
         isLoggedIn='true'
         source $LOCALDIR/.usercreds
-        printf "[0m[34mLOGIN STATUS: "
+        printf "[0m[34mLOGIN STATUS  : "
         tput setaf 48; printf "True${NC}\n"
-        printf "[0m[34mSUBSCRIBER ID: [0m[32m$sub_id[0m\n"
-        printf "[0m[34mRMN: [0m[32m$tata_mobile[0m\n"
-        printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n${NC}"
+        printf "[0m[34mSUBSCRIBER ID : [0m[32m$sub_id[0m\n"
+        #printf "[0m[34mRMN: [0m[32m$tata_mobile[0m\n"
+        printf "[0m[34mPlaylist Type : " && print_playlist_type
+        printf "[0m[34mAuthor        :[0m[32m https://github.com/Shra1V32\n${NC}"
     elif [[ -f "$LOCALDIR/.usercreds" && ! -f "$LOCALDIR/userDetails.json" ]]; then
         echo "$wait No userDetails.json found, Sending OTP to login..."
         source $LOCALDIR/.usercreds
@@ -87,10 +96,11 @@ case_helper(){
     echo -e "[0m[31m[43mMain Menu${NC}"
     printf "\n"
     echo "1) Login using RMN & OTP"
-    echo "2) Manage my M3U playlists"
-    echo "3) Build my Auto Updater"
-    echo "4) Logout"
-    echo "5) Exit"
+    echo "2) Change Playlist Type"
+    echo "3) Manage my M3U playlists"
+    echo "4) Build my Auto Updater"
+    echo "5) Logout"
+    echo "6) Exit"
     echo " "
     printf "Make your selection: "
     while true; do
@@ -102,7 +112,13 @@ case_helper(){
             break
             ;;
 
-            2) printf "\n"; case_banner; echo "$wait You've chosen to \"Manage my playlists\""
+            2) printf "\n"; case_banner; echo "$wait You've chosen Change Playlist Type"
+            ask_playlist_type;
+            case_helper;
+            break;
+            ;;
+
+            3) printf "\n"; case_banner; echo "$wait You've chosen to \"Manage my playlists\""
             if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
             source "$LOCALDIR/.usercreds"
             check_if_repo_exists
@@ -111,7 +127,7 @@ case_helper(){
             break;
             ;;
 
-            3) printf "\n"; case_banner; echo "$wait You've chosen to \"Build my Auto Updater\"";
+            4) printf "\n"; case_banner; echo "$wait You've chosen to \"Build my Auto Updater\"";
             if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
             source "$LOCALDIR/.usercreds" && ls $LOCALDIR/userDetails.json > /dev/null 2>&1 || { echo  "Something went wrong"; exit 0; }
             check_if_repo_exists || true
@@ -119,14 +135,20 @@ case_helper(){
             break;
             ;;
 
-            4) printf '\n'; case_banner; echo "$wait You've chosen to Logout from TataSky & GitHub";
+            5) printf '\n'; case_banner; echo "$wait You've chosen to Logout from TataSky & GitHub";
+            printf "Are you sure that you want to Logout from your Account? (y/n): "
+            read -N 1 -s -r logout_status
+            if [[ "$logout_status" == 'y' || "$logout_status" == 'Y' ]]; then
             { rm $LOCALDIR/.usercreds $LOCALDIR/userDetails.json >> /dev/null 2>&1; } || { echo -e "$wait ${RED}You're not logged in to select this task${NC}"; menu_exit; break; }
             sleep 1.5s; echo "$wait Task Completed"
             menu_exit;
+            else
+                case_helper;
+            fi
             break;
             ;;
 
-            5) printf "\n"; menu_exit;
+            6) printf "\n"; menu_exit;
         esac
     done
         
@@ -285,6 +307,8 @@ extract_git_vars()
     | head -n1 \
     | tr -d '", ' \
     | sed 's/email://g')
+
+    [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; false; }
 }
 
 check_storage_access()
@@ -427,12 +451,16 @@ check_if_repo_exists()
     gh auth login --with-token < mytoken.txt >> /dev/null 2>&1
     rm mytoken.txt
     check_repo=$(gh repo list | grep 'TataSkyIPTV-Daily') || true
-    if [[ -n $check_repo && isCalledByCaseHelper != 'true' && $(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml") != *'404: Not Found' ]]; then
+    if [[ -n $check_repo ]]; then
+        if [[ "$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml")" == *'404: Not Found' ]]; then
+            repo_empty='true' && repo_exists='false'
+        else
         repo_exists='true'
         ask_user_to_select;
         if [[ "$selection" == '3' ]]; then
             dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n1|rev | cut -f1 -d/)
             gh gist delete $dir || true  # Delete the gist when option 3 is selected as the playlist url becomes obsolete anyway
+            fi
         fi
     else
         repo_exists='false'
@@ -444,23 +472,25 @@ ask_user_to_select()
 {
     case_banner;
     printf "\n Please Select from the options below: \n\n"
-    echo "   1) Re-run the script & Update my repo with same playlist. (Your repo will be updated with current login details)"
-    echo "   2) Maintain other playlist with another Tata Sky Account (Maintain multiple playlists)"
-    echo "   3) Generate new playlist with new link (Overridden with your new playlist)"
+    echo "   1) Sync my private repo (Your repo will be updated with current login details)"
+    echo "   2) Maintain multiple playlists with other Login details"
+    echo "   3) Stop Maintaining my old playlist & Create a new one instead"
     echo "   4) Delete one of my multiple playlist (Main playlist cannot be deleted with this option)"
-    echo "   5) Delete my 'TataSkyIPTV-Daily' repo"
+    echo "   5) Delete my 'TataSkyIPTV-Daily' repo (Including Playlist)"
     echo "   [33mm = Main Menu[0m"
     echo -e "   [0m[35mq = Quit${NC}"
     printf '\n'
     while true; do
         printf "Selection: "
         read -N 1 -s -r selection
+        printf "\n"
         case $selection in
             '1') echo "$wait Option 1 chosen"; break
             ;;
             '2') echo "$wait Option 2 chosen";
                 while true; do
-                    read -p "Would you like to perform the this operation with current login information? (y/n) " perform_operation;
+                    printf "Would you like to perform the this operation with current login information? (y/n):"
+                    read -N 1 -s -r perform_operation;
                     case $perform_operation in
                         'y') true; break
                         ;;
@@ -475,7 +505,17 @@ ask_user_to_select()
             ;;
             '4') echo "$wait Option 4 chosen"; main; break # Skip to main directly, As we are not really making playlist here
             ;;
-            '5') echo "$wait Option 5 chosen"; printf '\n'; gh repo delete TataSkyIPTV-Daily; menu_exit; break;
+            '5') echo "$wait Option 5 chosen";
+                printf '\n'
+                number_of_playlists_maintained=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o "https://$git_token@gist.github" | wc -l)
+                for (( i=1; i<=$number_of_playlists_maintained; i++ )); do
+                    deletion_num=$i
+                    export dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep "$git_token@gist.github" | head -n$deletion_num | tail -n1 |rev | cut -f1 -d/ | rev)
+                    gh gist delete $dir
+                done
+                gh repo delete TataSkyIPTV-Daily
+                menu_exit;
+                break;
             ;;
             'm') case_helper; break;
             ;;
@@ -503,15 +543,17 @@ take_vars_from_existing_repo()
 # Ask user for the playlist 
 ask_playlist_type()
 {
+    mkdir -p ~/.config >> /dev/null 2>&1 || true
     printf "\nWhich type of playlist would you like to have? (Both are Tivimate compatible)\n\n"
     echo "  1. Kodi-Compatible"
     printf "  2. OTT-Navigator-Compatible\n\n"
     while true; do
-        read -p "Select from the options above: " playlist_type;
+        printf "Select from the options above: "
+        read -N 1 -s -r playlist_type;
         case $playlist_type in
-            '1') echo "$wait Option 1 chosen"; break
+            '1') echo "$wait Option 1 chosen"; rm ~/.config/.ottnavigator >> /dev/null 2>&1 || true; break
             ;;
-            '2') echo "$wait Option 2 chosen"; break
+            '2') echo "$wait Option 2 chosen"; touch ~/.config/.ottnavigator; break
             ;;
             *) echo "Invalid option chosen, Please try again..."
             ;;
@@ -523,7 +565,7 @@ ask_playlist_type()
 start()
 {
     if [[ "$1" != './main.sh' ]]; then clear; printf "${RED} Wrong usage, Run using:\n./main.sh${NC}\n"; exit 0; fi
-    if [[ ! -f ".itsme" ]]; then { git restore $LOCALDIR/.; git pull --rebase; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh; exit & ./main.sh; } fi
+    if [[ ! -f ".itsme" ]]; then { git restore $LOCALDIR/.; git pull --rebase >> /dev/null 2>&1; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh; exit & ./main.sh; } fi
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' || -f .itsme ]]; then
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
@@ -577,7 +619,6 @@ dynamic_push()
 
 star_repo() {
     curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
-    curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV
 }
 
 check_dependencies(){
@@ -689,7 +730,7 @@ main()
     git remote remove origin
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
     echo "$wait Pushing your personal private repository to your account..."
-    dynamic_push >> /dev/null 2>&1;
+    dynamic_push >> /dev/null 2>&1 || { echo "Something went wrong while pushing.."; menu_exit; }
     git clone $gist_url >> /dev/null 2>&1
     cd $dir; rm allChannelPlaylist.m3u; mv ../code_samples/allChannelPlaylist.m3u .
     git add .
@@ -702,7 +743,7 @@ main()
     printf '\n\n'
     tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
     tput setaf 43; echo -e "Credits: ${NC}Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
-    tput setaf 43; echo -e "My Github Profile: ${NC}https://github.com/Shra1V32"
+    tput setaf 43; echo -e "Authors' Github Profile: ${NC}https://github.com/Shra1V32"
     printf '\n\n'
     tput setaf 43; printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
     tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
