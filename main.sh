@@ -51,7 +51,7 @@ print_spaces(){
 
 case_banner(){
     set +x
-    for (( i=0; i<$lines; i++));  do     printf '\n';     done;  echo "[H"
+    printf "\033[H\033[2J"
     cat dyn_banner
     # echo -e "$white_bg$(tput bold)${white_bg}TataPlay Playlist AutoUpdater${NC}"
     # echo -e "[7m[3mby Shravan[0m"
@@ -718,7 +718,7 @@ main()
     menu_exit;
 }
 export_log;
-clear;
+printf "\033[H\033[2J"
 check_dependencies;
 set +x
 { print_lines; print_spaces; print_lines; } > dyn_banner
