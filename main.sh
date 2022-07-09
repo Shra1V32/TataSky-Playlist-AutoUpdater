@@ -233,6 +233,10 @@ send_otp()
         printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
         take_tsky_vars;
         send_otp;
+    elif [[ "$send_otp_data" == *"code\":1010"* ]]; then
+        printf "Subscriber id must be of 10 digits."
+        take_tsky_vars;
+        send_otp;
     elif [[ "$send_otp_data" == *"\"code\":1002"* ]]; then
         printf "${RED}\nSubscriber ID cannot be left empty${NC}"
         menu_exit;
@@ -308,7 +312,7 @@ extract_git_vars()
     | tr -d '", ' \
     | sed 's/email://g')
 
-    [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; false; }
+    [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; false; } || true
 }
 
 check_storage_access()
@@ -346,6 +350,7 @@ initiate_setup()
         sudo echo '' > /dev/null 2>&1
         sudo apt update
         sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
+        pip install --upgrade pip
         pip3 install requests
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
@@ -362,6 +367,7 @@ initiate_setup()
             echo "$wait Please wait while the installation takes place..."
             apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
             pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
+            pip install --upgrade pip
             pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             echo "Installation done successfully!"
         else
