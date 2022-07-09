@@ -1,3 +1,4 @@
+            # Copyright (C) 2022 Shra1V32 <namanageshwar@outlook.com>
             cd ..
             cat "$branch_name.json" > userDetails.json
             ./script.exp

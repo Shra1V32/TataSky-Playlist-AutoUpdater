@@ -1,4 +1,8 @@
 #!/bin/bash -e
+
+# Copyright (C) 2022 Shra1V32 <namanageshwar@outlook.com>
+#        GitHub: https://github.com/Shra1V32
+
 RED='\033[0;31m'
 NC='\033[0m'
 
