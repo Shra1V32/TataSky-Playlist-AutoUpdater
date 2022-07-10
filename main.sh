@@ -54,6 +54,7 @@ print_spaces(){
 
 case_banner(){
     set +x
+    source $LOCALDIR/.usercreds >> /dev/null 2>&1 || true
     printf "\033[H\033[2J"
     cat $LOCALDIR/dyn_banner
     # echo -e "$white_bg$(tput bold)${white_bg}TataPlay Playlist AutoUpdater${NC}"
@@ -313,6 +314,7 @@ extract_git_vars()
     | sed 's/email://g')
 
     [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; false; } || true
+    star_repo;
 }
 
 check_storage_access()
@@ -464,7 +466,7 @@ check_if_repo_exists()
         repo_exists='true'
         ask_user_to_select;
         if [[ "$selection" == '3' ]]; then
-            dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n1|rev | cut -f1 -d/)
+            dir=$(curl -s -H "Cache-Control: no-cache" "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n1|rev | cut -f1 -d/)
             gh gist delete $dir || true  # Delete the gist when option 3 is selected as the playlist url becomes obsolete anyway
             fi
         fi
@@ -571,7 +573,7 @@ ask_playlist_type()
 start()
 {
     if [[ "$1" != './main.sh' ]]; then clear; printf "${RED} Wrong usage, Run using:\n./main.sh${NC}\n"; exit 0; fi
-    if [[ ! -f ".itsme" ]]; then { git restore $LOCALDIR/.; git pull --rebase >> /dev/null 2>&1; curl -fsSL 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh; exit & ./main.sh; } fi
+    if [[ ! -f ".itsme" ]]; then { git restore $LOCALDIR/.; git pull --rebase >> /dev/null 2>&1; curl -fsSL -H "Cache-Control: no-cache" 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh; exit & ./main.sh; } fi
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' || -f .itsme ]]; then
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
@@ -593,7 +595,9 @@ start()
 create_gist()
 {
     if [[ "$selection" == "2" || "$repo_exists" == 'false' || "$selection" == '3' ]]; then
-        echo "Initial Test" >> allChannelPlaylist.m3u
+        echo "Initial Test 
+        - First playlist upload might take some time, Please comeback here after a few mins :)
+        - Still facing issues? Join: https://telegram.me/tskyiptv " >> allChannelPlaylist.m3u
         echo "$wait Uploading the playlist to Gist..."
         gh gist create allChannelPlaylist.m3u | tee gist_link.txt >> /dev/null 2>&1
         sed -i "s/gist/$git_token@gist/g" gist_link.txt
@@ -602,6 +606,19 @@ create_gist()
         rm allChannelPlaylist.m3u gist_link.txt
         gh repo create TataSkyIPTV-Daily --private -y >> /dev/null 2>&1 || true
     fi
+}
+
+dump_banner(){
+    lines=$(tput cols)
+    { print_lines; print_spaces; print_lines; } > $LOCALDIR/dyn_banner
+}
+
+run_workflow(){
+    cp -frp $LOCALDIR/dependencies/gh_workflow_run.exp . && chmod 755 gh_workflow_run.exp
+    echo "$wait Running Workflow..."
+    ./gh_workflow_run.exp
+    rm gh_workflow_run.exp
+    sleep 3s
 }
 
 # Push based on certain conditions
@@ -694,7 +711,7 @@ main()
             case_helper;
         fi
     else
-        echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the nework connection you have..."
+        echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the network connection you have..."
         git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
         cd Tata-Sky-IPTV/code_samples/
         cp -frp $LOCALDIR/userDetails.json .
@@ -702,12 +719,12 @@ main()
             echo "$wait Selected Playlist Type: OTT-Navigator-Compatible"
             git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1 # Won't work in multiple-playlists btw
         fi
-        cat $LOCALDIR/dependencies/post_script.exp > script.exp
-        chmod 755 script.exp
-        echo "$wait Generating M3U File..."
-        python3 utils.py
+        #cat $LOCALDIR/dependencies/post_script.exp > script.exp
+        #chmod 755 script.exp
+        #echo "$wait Generating M3U File..."
+        #python3 utils.py
         echo "$wait Logging in with your GitHub account..."
-        rm script.exp
+        #rm script.exp
         cd ..
         create_gist >> /dev/null 2>&1
         take_vars_from_existing_repo;
@@ -737,15 +754,16 @@ main()
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
     echo "$wait Pushing your personal private repository to your account..."
     dynamic_push >> /dev/null 2>&1 || { echo "Something went wrong while pushing.."; menu_exit; }
-    git clone $gist_url >> /dev/null 2>&1
-    cd $dir; rm allChannelPlaylist.m3u; mv ../code_samples/allChannelPlaylist.m3u .
-    git add .
-    git commit -m "Initial Playlist Upload" >> /dev/null 2>&1;
-    echo "$wait Pushing the playlist to your account..."
-    git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 0; }
-    printf '\n\n'
+    #git clone $gist_url >> /dev/null 2>&1
+    #cd $dir; rm allChannelPlaylist.m3u; mv ../code_samples/allChannelPlaylist.m3u .
+    #git add .
+    #git commit -m "Initial Playlist Upload" >> /dev/null 2>&1;
+    #echo "$wait Pushing the playlist to your account..."
+    #git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 0; }
+    #printf '\n\n'
+    sleep 5s
+    run_workflow >> /dev/null 2>&1
     tput setaf 43; echo "Hooray! Successfully created your new private repo.";
-    star_repo;
     printf '\n\n'
     tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
     tput setaf 43; echo -e "Credits: ${NC}Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
@@ -767,10 +785,6 @@ export_log;
 printf "\033[H\033[2J"
 check_dependencies;
 set +x
-dump_banner(){
-    lines=$(tput cols)
-    { print_lines; print_spaces; print_lines; } > $LOCALDIR/dyn_banner
-}
 dump_banner
 trap dump_banner WINCH
 set -x
