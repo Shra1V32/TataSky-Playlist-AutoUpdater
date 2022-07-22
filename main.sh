@@ -8,7 +8,8 @@ export LOCALDIR=$(pwd)
 export RED='\033[0;31m'
 export NC='\033[0m'
 export WHITE='\033[7m'
-declare -x lines
+declare -x lines menu_exit
+trap menu_exit 2
 
 # Print info
 info()
@@ -156,9 +157,9 @@ case_helper(){
 }
 
 menu_exit(){
-    printf '\n'; echo -e "[0m[32mPress \"q\" to Quit, or \"r\" to Restart[0m"; trap 2; read -N 1 -s -r quit_resp; trap '' 2;
+    printf '\n\n'; echo -e "[0m[32mPress \"q\" to Quit, or \"r\" to Restart[0m"; read -N 1 -s -r quit_resp;
     case $quit_resp in
-    'q') set +x; exit 0;
+    'q') set +x && trap 2; exit 0;
     ;;
     'r') case_helper;
     ;;
@@ -230,20 +231,26 @@ send_otp()
     --data-raw "{\"sid\":\"$sub_id\",\"rmn\":\"$tata_mobile\"}" \
     --compressed);
 
-    if [[ "$send_otp_data" == *"\"code\":1008"* ]]; then
-        printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
-        take_tsky_vars;
-        send_otp;
-    elif [[ "$send_otp_data" == *"code\":1010"* ]]; then
-        printf "Subscriber id must be of 10 digits."
-        take_tsky_vars;
-        send_otp;
-    elif [[ "$send_otp_data" == *"\"code\":1002"* ]]; then
-        printf "${RED}\nSubscriber ID cannot be left empty${NC}"
+    case $send_otp_data in
+        *"\"code\":1002"*) printf "${RED}\nSubscriber ID cannot be left empty${NC}"
         menu_exit;
-    fi
-    echo "OTP Sent successfully"
-    read_otp;
+        break;
+        ;;
+        *"\"code\":1008"*) printf "\nPlease enter a valid Tata Play Subscriber ID or Registered Mobile number\n"
+        take_tsky_vars;
+        send_otp;
+        break;
+        ;;
+        *"code\":1010"*) printf "${RED}Subscriber id must be of 10 digits.${NC}\n"
+        take_tsky_vars;
+        send_otp;
+        break;
+        ;;
+        *) echo "OTP Sent successfully"
+        read_otp;
+        break;
+        ;;
+    esac
 }
 
 # Read & Validate OTP
@@ -298,13 +305,13 @@ extract_git_vars()
         echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; read_git_token;
     fi
 
-    curl -s -H "Authorization: token $git_token" \
-    "https://api.github.com/user" \
-    |& set -x source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') \
-    |& set +x grep 'name' \
-    | head -n1 > source && cat source \
-    | sed "s#=#=\'#g" \
-    | sed "s/$/\'/g" > $LOCALDIR/source
+    # curl -s -H "Authorization: token $git_token" \
+    # "https://api.github.com/user" \
+    # |& set -x source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') \
+    # |& set +x grep 'name' \
+    # | head -n1 > source && cat source \
+    # | sed "s#=#=\'#g" \
+    # | sed "s/$/\'/g" > $LOCALDIR/source
 
     git_mail=$(curl -s -H "Authorization: token $git_token" \
     'https://api.github.com/user/emails' \
@@ -313,7 +320,7 @@ extract_git_vars()
     | tr -d '", ' \
     | sed 's/email://g')
 
-    [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; false; } || true
+    [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; }
     star_repo;
 }
 
@@ -345,13 +352,13 @@ initiate_setup()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
         echo "[H[2J[3J[38;5;43m"
-        curl -s 'https://pastebin.com/raw/N3TprJxp' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
+        cat $LOCALDIR/dependencies/banner_linux || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
         echo -e "${NC}"
         echo "$wait Please wait while the one-time-installation takes place..."
         printf "Please Enter your password to proceed with the setup: "
         sudo echo '' > /dev/null 2>&1
-        sudo apt update
-        sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
+        sudo apt update >> /dev/null 2>&1
+        sudo apt install python3 expect dos2unix python3-pip perl -y >> /dev/null 2>&1 || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
         pip install --upgrade pip
         pip3 install requests
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -363,11 +370,11 @@ initiate_setup()
     elif [[ $OSTYPE == 'linux-android'* ]]; then
         if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
             echo "[H[2J[3J[38;5;43m"
-            curl -s 'https://pastebin.com/raw/RHe4YyY2' || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
+            cat $LOCALDIR/dependencies/banner_android || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
             echo " By Shravan: https://github.com/Shra1V32"
             echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
-            apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes
+            { apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes; } >> /dev/null 2>&1
             pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             pip install --upgrade pip
             pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
@@ -456,7 +463,7 @@ ask_direct_login()
 check_if_repo_exists()
 {
     echo "$git_token" > mytoken.txt
-    gh auth login --with-token < mytoken.txt >> /dev/null 2>&1
+    gh auth login --with-token < mytoken.txt >> /dev/null 2>&1 || { echo -e "${RED}Make sure that you've gave all the neccessary permissions to the GitHub Token${NC}"; }
     rm mytoken.txt
     check_repo=$(gh repo list | grep 'TataSkyIPTV-Daily') || true
     if [[ -n $check_repo ]]; then
@@ -519,7 +526,7 @@ ask_user_to_select()
                 for (( i=1; i<=$number_of_playlists_maintained; i++ )); do
                     deletion_num=$i
                     export dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep "$git_token@gist.github" | head -n$deletion_num | tail -n1 |rev | cut -f1 -d/ | rev)
-                    gh gist delete $dir
+                    gh gist delete $dir || true
                 done
                 gh repo delete TataSkyIPTV-Daily
                 menu_exit;
@@ -613,12 +620,20 @@ dump_banner(){
     { print_lines; print_spaces; print_lines; } > $LOCALDIR/dyn_banner
 }
 
+
+initiate_workflow_run(){
+    if [[ $(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml") == *'404: Not Found' ]]; then
+        sleep 1s;
+        initiate_workflow_run
+    else
+        true
+    fi
+}
 run_workflow(){
-    cp -frp $LOCALDIR/dependencies/gh_workflow_run.exp . && chmod 755 gh_workflow_run.exp
-    echo "$wait Running Workflow..."
-    ./gh_workflow_run.exp
-    rm gh_workflow_run.exp
-    sleep 3s
+    #cp -frp $LOCALDIR/dependencies/gh_workflow_run.exp . && chmod 755 gh_workflow_run.exp
+    sleep 1s
+    $LOCALDIR/dependencies/gh_workflow_run.exp || run_workflow
+    #rm gh_workflow_run.exp
 }
 
 # Push based on certain conditions
@@ -761,7 +776,9 @@ main()
     #echo "$wait Pushing the playlist to your account..."
     #git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 0; }
     #printf '\n\n'
-    sleep 5s
+    #sleep 5s
+    echo "$wait Running Workflow..."
+    initiate_workflow_run
     run_workflow >> /dev/null 2>&1
     tput setaf 43; echo "Hooray! Successfully created your new private repo.";
     printf '\n\n'
