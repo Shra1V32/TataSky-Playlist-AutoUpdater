@@ -178,10 +178,10 @@ take_input()
 {
     read_git_token
     extract_git_vars;
-    source source;
-    if [[ "$name" != '' ]]; then
-        tput setaf 43; echo Welcome, $name.; tput init;
-    fi
+    #source source;
+    #if [[ "$name" != '' ]]; then
+    #    tput setaf 43; echo Welcome, $name.; tput init;
+    #fi
     take_tsky_vars;
     send_otp;
     save_creds; # Save creds after every inputs are verified
@@ -507,14 +507,16 @@ ask_user_to_select()
                     printf "Would you like to perform the this operation with current login information? (y/n):"
                     read -N 1 -s -r perform_operation;
                     case $perform_operation in
-                        'y') true; break
+                        'y') true; break;
                         ;;
-                        'n') true; rm $LOCALDIR/.usercreds; case_helper; break
+                        'n') true; rm $LOCALDIR/.usercreds; case_helper; break;
                         ;;
-                        *) echo Invalid selection, Please try again
+                        *) printf '\nInvalid selection, Please try again\n'
                         ;;
                     esac
                 done
+            printf '\n'
+            break;
             ;;
             '3') echo "$wait Option 3 chosen"; break
             ;;
