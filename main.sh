@@ -58,8 +58,6 @@ case_banner(){
     source $LOCALDIR/.usercreds >> /dev/null 2>&1 || true
     printf "\033[H\033[2J"
     cat $LOCALDIR/dyn_banner
-    # echo -e "$white_bg$(tput bold)${white_bg}TataPlay Playlist AutoUpdater${NC}"
-    # echo -e "[7m[3mby Shravan[0m"
     check_login
     printf '\n'
     set -x
@@ -178,9 +176,6 @@ take_input()
 {
     read_git_token
     extract_git_vars;
-    #source source;
-    #if [[ "$name" != '' ]]; then
-    #    tput setaf 43; echo Welcome, $name.; tput init;
     #fi
     take_tsky_vars;
     send_otp;
@@ -191,24 +186,6 @@ take_tsky_vars(){
     read -p " Enter your Tata Sky Subscriber ID: " sub_id;
     read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
 }
-
-# validate_otp()
-# {
-# validate_otp_data=$(curl -s 'https://www.tataplay.com/inception-auth/v2/user/otp-login-validate' \
-#   -H 'authority: www.tataplay.com' \
-#   -H 'accept: application/json, text/plain, */*' \
-#   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.87 Safari/537.36' \
-#   -H 'content-type: application/json' \
-#   -H 'sec-gpc: 1' \
-#   -H 'origin: https://www.tataplay.com' \
-#   -H 'sec-fetch-site: same-origin' \
-#   -H 'sec-fetch-mode: cors' \
-#   -H 'sec-fetch-dest: empty' \
-#   -H 'referer: https://www.tataplay.com/my-account/authenticate' \
-#   -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
-#   --data-raw "{\"otp\":\"$tata_otp\",\"subscriberId\":\"$tata_mobile\"}" \
-#   --compressed | source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') > source)
-# }
 
 # Send OTP using the TSky creds
 send_otp()
@@ -305,14 +282,6 @@ extract_git_vars()
         echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; read_git_token;
     fi
 
-    # curl -s -H "Authorization: token $git_token" \
-    # "https://api.github.com/user" \
-    # |& set -x source <(curl -s 'https://raw.githubusercontent.com/fkalis/bash-json-parser/master/bash-json-parser') \
-    # |& set +x grep 'name' \
-    # | head -n1 > source && cat source \
-    # | sed "s#=#=\'#g" \
-    # | sed "s/$/\'/g" > $LOCALDIR/source
-
     git_mail=$(curl -s -H "Authorization: token $git_token" \
     'https://api.github.com/user/emails' \
     | grep 'email' \
@@ -357,8 +326,8 @@ initiate_setup()
         echo "$wait Please wait while the one-time-installation takes place..."
         printf "Please Enter your password to proceed with the setup: "
         sudo echo '' > /dev/null 2>&1
-        sudo apt update >> /dev/null 2>&1
-        sudo apt install python3 expect dos2unix python3-pip perl -y >> /dev/null 2>&1 || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
+        sudo apt update
+        sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
         pip install --upgrade pip
         pip3 install requests
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -374,7 +343,7 @@ initiate_setup()
             echo " By Shravan: https://github.com/Shra1V32"
             echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
-            { apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes; } >> /dev/null 2>&1
+            { apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes; }
             pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             pip install --upgrade pip
             pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
@@ -590,8 +559,6 @@ start()
     
         elif [[ $OSTYPE == 'linux-android'* ]]; then
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
-            # tput setaf 43; cat $LOCALDIR/banner_linux-android|| { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
-            # info;
         else
             echo -e "${RED}Platform not supported, Exiting...${NC}"; sleep 3; exit 0;
         fi
@@ -632,10 +599,8 @@ initiate_workflow_run(){
     fi
 }
 run_workflow(){
-    #cp -frp $LOCALDIR/dependencies/gh_workflow_run.exp . && chmod 755 gh_workflow_run.exp
     sleep 1s
     $LOCALDIR/dependencies/gh_workflow_run.exp || run_workflow
-    #rm gh_workflow_run.exp
 }
 
 # Push based on certain conditions
@@ -683,12 +648,12 @@ count_channels(){
 
 delete_which_playlist(){
     for (( i=1; i<=$number_of_playlists_maintained; i++)); do  # Lists out all the available gist dirs found in the .yml file
-        dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
+        dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github.com' | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
         count_channels "https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u"
         echo "$i. $dir with $number_of_channels channels"
     done
     read -p "Select which playlist to delete: " deletion_num
-    dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n$deletion_num | tail -n1 |rev | cut -f1 -d/ | rev)
+    dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github.com' | head -n$deletion_num | tail -n1 |rev | cut -f1 -d/ | rev)
     delete_playlist # More checks/Better implementation needed
     echo "$wait Playlist has been deleted successfully"
     case_helper;
@@ -704,22 +669,18 @@ main()
     if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
         echo "$wait Cloning your personal repo..."
         git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }  
-        cd TataSkyIPTV-Daily/code_samples;
-        cp -frp $LOCALDIR/userDetails.json .
-        python3 utils.py
-        echo "$wait Logging in with your GitHub account..."
-        cd ..
+        cd TataSkyIPTV-Daily/;
         create_gist >> /dev/null 2>&1
         branch_name=$(echo "$dir" | cut -c 1-6)
-        cd code_samples; mv userDetails.json $branch_name.json
-        curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/code_samples/userDetails.json" > userDetails.json
+        cp -frp $LOCALDIR/userDetails.json code_samples/$branch_name.json
+        echo "$wait Logging in with your GitHub account..."
         cd $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/
     elif [[ "$repo_exists" == 'true' && "$selection" == '4' ]]; then # Only this part should be executed when selection is '4'
         number_of_playlists_maintained=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o 'gist.github' | wc -l) || true
         if [[ "$number_of_playlists_maintained" != '1' ]]; then # Don't pass to 'delete_which_playlist' function, if the number of playlist counts to '1', As we don't delete the main playlist using this anyway
             echo "$wait Cloning your personal repo..."
             git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }
-            cd TataSkyIPTV-Daily/code_samples;
+            cd $LOCALDIR/TataSkyIPTV-Daily/code_samples;
             printf '\n'
             echo "Number of playlists currently maintained: $number_of_playlists_maintained"
             delete_which_playlist;
@@ -732,16 +693,7 @@ main()
         git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
         cd Tata-Sky-IPTV/code_samples/
         cp -frp $LOCALDIR/userDetails.json .
-        if [[ "$playlist_type" == '2' ]]; then
-            echo "$wait Selected Playlist Type: OTT-Navigator-Compatible"
-            git revert --no-commit f291bf7be579bcd726208a8ce0d0dd1a0bc801e1 # Won't work in multiple-playlists btw
-        fi
-        #cat $LOCALDIR/dependencies/post_script.exp > script.exp
-        #chmod 755 script.exp
-        #echo "$wait Generating M3U File..."
-        #python3 utils.py
         echo "$wait Logging in with your GitHub account..."
-        #rm script.exp
         cd ..
         create_gist >> /dev/null 2>&1
         take_vars_from_existing_repo;
@@ -753,14 +705,10 @@ main()
     export git_token=$git_token
     export git_mail=$git_mail
     export branch_name=$branch_name # We export only for selection 2 & repo_exists=true
+    if [[ "$playlist_type" == '2' ]]; then export playlist_args='--ott-navigator'; else true; fi
     if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
         if [[ "$(cat -e Tata-Sky-IPTV-Daily.yml | tail -n1 | rev | cut -c 1-1 | rev)" != '$' ]]; then printf '\n' >> Tata-Sky-IPTV-Daily.yml; fi
         cat $LOCALDIR/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
-        # echo "
-        #       multi_playlist=true
-        #       dir=$dir
-        #       gist_url=$gist_url
-        #       branch_name=$branch_name" >> $LOCALDIR/TataSkyIPTV-Daily/code_samples/playlist.details # Save these details just in case we need them in future, not needed for now
     else
         cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
     fi
@@ -771,14 +719,6 @@ main()
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
     echo "$wait Pushing your personal private repository to your account..."
     dynamic_push >> /dev/null 2>&1 || { echo "Something went wrong while pushing.."; menu_exit; }
-    #git clone $gist_url >> /dev/null 2>&1
-    #cd $dir; rm allChannelPlaylist.m3u; mv ../code_samples/allChannelPlaylist.m3u .
-    #git add .
-    #git commit -m "Initial Playlist Upload" >> /dev/null 2>&1;
-    #echo "$wait Pushing the playlist to your account..."
-    #git push >> /dev/null 2>&1 || { tput setaf 9; printf 'Something went wrong!\n ERROR Code: 65x00a\n'; exit 0; }
-    #printf '\n\n'
-    #sleep 5s
     echo "$wait Running Workflow..."
     initiate_workflow_run
     run_workflow >> /dev/null 2>&1
@@ -791,8 +731,8 @@ main()
     tput setaf 43; printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
     tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
     tput setaf 43; printf "Your playlist expires on:${NC} $(date -d @$(cat $LOCALDIR/userDetails.json | cut -c 67-76)| rev | cut -c 6- | rev | cut -c 1-10)\n" # Print out even the expiry date
-    tput setaf 43; printf "\nYou need to run this script again after this date with Option 1\n"
-    tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator now, No need to remove hashcode\n"
+    tput setaf 43; printf "\nYou need to run this script again before/at/after this date with Option 1 to keep your Playlist functional\n"
+    tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator\n"
     tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
     tput setaf 43; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
     rm -rf $LOCALDIR/Tata-Sky-IPTV;
