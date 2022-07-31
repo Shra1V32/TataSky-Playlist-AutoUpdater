@@ -440,6 +440,7 @@ check_if_repo_exists()
             repo_empty='true' && repo_exists='false'
         else
         repo_exists='true'
+        number_of_playlists_maintained=$(curl -s -H "Authorization: token $git_token" "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o 'gist.github' | wc -l) || true
         ask_user_to_select;
         if [[ "$selection" == '3' ]]; then
             dir=$(curl -s -H "Cache-Control: no-cache" "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github' | head -n1|rev | cut -f1 -d/)
@@ -469,7 +470,7 @@ ask_user_to_select()
         read -N 1 -s -r selection
         printf "\n"
         case $selection in
-            '1') echo "$wait Option 1 chosen"; break
+            '1') echo "$wait Option 1 chosen"; break # In case of selection for 1, We simply clone the main repo & then adapt with the repo with user creds
             ;;
             '2') echo "$wait Option 2 chosen";
                 while true; do
@@ -517,10 +518,23 @@ ask_user_to_select()
 take_vars_from_existing_repo()
 {
     if [[ $selection == '1' ]]; then
-        dir="$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml"\
-        | perl -p -e 's/\r//g' \
-        | grep 'gist' \
-        | sed 's/.*\///g')"
+        if [[ $number_of_playlists_maintained == '1' ]]; then
+            dir="$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml"\
+            | perl -p -e 's/\r//g' \
+            | grep 'gist.github.com' \
+            | sed 's/.*\///g')"
+        elif [[ $number_of_playlists_maintained -gt '1' ]]; then
+            multi_dirs='true'
+            dir="$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml"\
+            | perl -p -e 's/\r//g' \
+            | grep 'gist.github.com' \
+            | sed 's/.*\///g' \
+            | head -n1)"
+        else
+            echo "$wait Failed to fetch information from the existing repo..."
+            menu_exit;
+        fi
+
         if [[ -z "$dir" ]]; then echo -e "${RED}Failed to fetch information from existing repo, Try running the script again...${NC}"; exit 0; fi
         gist_url="https://$git_token@gist.github.com/$dir"
     fi
@@ -659,6 +673,27 @@ delete_which_playlist(){
     case_helper;
 }
 
+print_info(){
+    if [[ $repo_exists='true' && "$selection"=='1' ]]; then
+        tput setaf 43; echo "Sucessfully updated your private repo"
+        tput setaf 43; printf "Check your Latest Synced private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
+    else
+        tput setaf 43; echo "Hooray! Successfully created your new private repo.";
+        printf '\n\n'
+        tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
+        tput setaf 43; echo -e "Credits: ${NC}Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
+        tput setaf 43; echo -e "Authors' Github Profile: ${NC}https://github.com/Shra1V32"
+        printf '\n\n'
+        tput setaf 43; printf "Repo URL: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
+        tput setaf 43; printf "Playlist URL: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
+        tput setaf 43; printf "Playlist Expiry :${NC} $(date -d @$(cat $LOCALDIR/userDetails.json | cut -c 67-76))\n"
+        tput setaf 43; printf "\nYou need to run this script again before/at/after this date with Option 1 to keep your Playlist functional\n"
+        tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator\n"
+        tput bold; printf "\n\nFor your Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
+        tput setaf 43; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
+    fi
+}
+
 # Main script
 main()
 {
@@ -676,7 +711,6 @@ main()
         echo "$wait Logging in with your GitHub account..."
         cd $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/
     elif [[ "$repo_exists" == 'true' && "$selection" == '4' ]]; then # Only this part should be executed when selection is '4'
-        number_of_playlists_maintained=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o 'gist.github' | wc -l) || true
         if [[ "$number_of_playlists_maintained" != '1' ]]; then # Don't pass to 'delete_which_playlist' function, if the number of playlist counts to '1', As we don't delete the main playlist using this anyway
             echo "$wait Cloning your personal repo..."
             git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }
@@ -709,6 +743,17 @@ main()
     if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
         if [[ "$(cat -e Tata-Sky-IPTV-Daily.yml | tail -n1 | rev | cut -c 1-1 | rev)" != '$' ]]; then printf '\n' >> Tata-Sky-IPTV-Daily.yml; fi
         cat $LOCALDIR/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
+    elif [[ $selection == '1' && $multi_dirs == 'true' ]]; then
+        cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
+        for (( i=2; i<=$number_of_playlists_maintained; i++)); do  # Lists out all the available gist dirs found in the .yml file
+            export dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github.com' | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
+            export git_id=$git_id
+            export git_token=$git_token
+            export branch_name=$(echo "$dir" | cut -c 1-6)
+            export gist_url="https://$git_token@gist.github.com/$dir"
+            curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/code_samples/$branch_name.json" > $LOCALDIR/Tata-Sky-IPTV/code_samples/$branch_name.json
+            cat $LOCALDIR/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
+        done
     else
         cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
     fi
@@ -722,19 +767,7 @@ main()
     echo "$wait Running Workflow..."
     initiate_workflow_run
     run_workflow >> /dev/null 2>&1
-    tput setaf 43; echo "Hooray! Successfully created your new private repo.";
-    printf '\n\n'
-    tput setaf 43; echo "Script by Shravan, Please do star my repo if you've liked my work :) "
-    tput setaf 43; echo -e "Credits: ${NC}Gaurav Thakkar (https://github.com/ForceGT) & Manohar Kumar"
-    tput setaf 43; echo -e "Authors' Github Profile: ${NC}https://github.com/Shra1V32"
-    printf '\n\n'
-    tput setaf 43; printf "Check your new private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
-    tput setaf 43; printf "Check Your Playlist URL here: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
-    tput setaf 43; printf "Your playlist expires on:${NC} $(date -d @$(cat $LOCALDIR/userDetails.json | cut -c 67-76)| rev | cut -c 6- | rev | cut -c 1-10)\n" # Print out even the expiry date
-    tput setaf 43; printf "\nYou need to run this script again before/at/after this date with Option 1 to keep your Playlist functional\n"
-    tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator\n"
-    tput bold; printf "\n\nFor Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
-    tput setaf 43; printf "Using this script for Commercial uses is NOT PERMITTED. \n\n"
+    print_info;
     rm -rf $LOCALDIR/Tata-Sky-IPTV;
     echo "Press Enter to exit."; read junk;
     tput setaf init;
