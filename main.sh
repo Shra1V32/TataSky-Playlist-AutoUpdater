@@ -674,7 +674,7 @@ delete_which_playlist(){
 }
 
 print_info(){
-    if [[ $repo_exists='true' && "$selection"=='1' ]]; then
+    if [[ "$repo_exists" == 'true' && "$selection" == '1' ]]; then
         tput setaf 43; echo "Sucessfully updated your private repo"
         tput setaf 43; printf "Check your Latest Synced private repo here: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
     else
@@ -720,7 +720,7 @@ main()
             delete_which_playlist;
         else
             echo " No multiple playlists found, Aborting...";
-            case_helper;
+            menu_exit;
         fi
     else
         echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the network connection you have..."
