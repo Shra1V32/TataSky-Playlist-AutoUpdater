@@ -4,7 +4,7 @@
 #        GitHub: https://github.com/Shra1V32
 
 export white_bg='\033[7m'
-export LOCALDIR=$(pwd)
+export LOCALDIR="${PWD}"
 export RED='\033[0;31m'
 export NC='\033[0m'
 export WHITE='\033[7m'
@@ -55,9 +55,9 @@ print_spaces(){
 
 case_banner(){
     set +x
-    source $LOCALDIR/.usercreds >> /dev/null 2>&1 || true
+    source "$LOCALDIR"/.usercreds >> /dev/null 2>&1 || true
     printf "\033[H\033[2J"
-    cat $LOCALDIR/dyn_banner
+    cat "$LOCALDIR/dyn_banner"
     check_login
     printf '\n'
     set -x
@@ -70,7 +70,7 @@ print_playlist_type(){
 check_login(){
     if [[ -f "$LOCALDIR/.usercreds" && -f "$LOCALDIR/userDetails.json" ]]; then
         isLoggedIn='true'
-        source $LOCALDIR/.usercreds
+        source "$LOCALDIR/.usercreds"
         printf "[0m[34mLOGIN STATUS  : "
         tput setaf 48; printf "True${NC}\n"
         printf "[0m[34mSUBSCRIBER ID : [0m[32m$sub_id[0m\n"
@@ -79,7 +79,7 @@ check_login(){
         printf "[0m[34mAuthor        :[0m[32m https://github.com/Shra1V32\n${NC}"
     elif [[ -f "$LOCALDIR/.usercreds" && ! -f "$LOCALDIR/userDetails.json" ]]; then
         echo "$wait No userDetails.json found, Sending OTP to login..."
-        source $LOCALDIR/.usercreds
+        source "$LOCALDIR/.usercreds"
         send_otp;
         isLoggedIn='true'
         case_banner
@@ -129,7 +129,7 @@ case_helper(){
 
             4) printf "\n"; case_banner; echo "$wait You've chosen to \"Build my Auto Updater\"";
             if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
-            source "$LOCALDIR/.usercreds" && ls $LOCALDIR/userDetails.json > /dev/null 2>&1 || { echo  "Something went wrong"; exit 0; }
+            source "$LOCALDIR/.usercreds" && ls "$LOCALDIR/userDetails.json" > /dev/null 2>&1 || { echo  "Something went wrong"; exit 0; }
             check_if_repo_exists || true
             main
             break;
@@ -139,7 +139,7 @@ case_helper(){
             printf "Are you sure that you want to Logout from your Account? (y/n): "
             read -N 1 -s -r logout_status
             if [[ "$logout_status" == 'y' || "$logout_status" == 'Y' ]]; then
-            { rm $LOCALDIR/.usercreds $LOCALDIR/userDetails.json >> /dev/null 2>&1; } || { echo -e "$wait ${RED}You're not logged in to select this task${NC}"; menu_exit; break; }
+            { rm "$LOCALDIR/.usercreds" "$LOCALDIR/userDetails.json" >> /dev/null 2>&1; } || { echo -e "$wait ${RED}You're not logged in to select this task${NC}"; menu_exit; break; }
             sleep 1.5s; echo "$wait Task Completed"
             menu_exit;
             else
@@ -310,7 +310,7 @@ export_log(){
         BASH_XTRACEFD="5"
     elif [[ "$OSTYPE" == 'linux-gnu'* ]];then
         set -x
-        exec 5> $LOCALDIR/debug.log
+        exec 5> "$LOCALDIR/debug.log"
         PS4='$LINENO: ' 
         BASH_XTRACEFD="5"
     fi
@@ -321,7 +321,7 @@ initiate_setup()
 {
     if [[ $OSTYPE == 'linux-gnu'* ]]; then
         echo "[H[2J[3J[38;5;43m"
-        cat $LOCALDIR/dependencies/banner_linux || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
+        cat "$LOCALDIR/dependencies/banner_linux" || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
         echo -e "${NC}"
         echo "$wait Please wait while the one-time-installation takes place..."
         printf "Please Enter your password to proceed with the setup: "
@@ -339,7 +339,7 @@ initiate_setup()
     elif [[ $OSTYPE == 'linux-android'* ]]; then
         if [[ $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]];then
             echo "[H[2J[3J[38;5;43m"
-            cat $LOCALDIR/dependencies/banner_android || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
+            cat "$LOCALDIR/dependencies/banner_android" || { tput setaf 9; echo " " && echo "This script needs active Internet Connection, Please Check and try again."; exit 0; }
             echo " By Shravan: https://github.com/Shra1V32"
             echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
@@ -362,13 +362,13 @@ initiate_setup()
 
 # Function to delete playlist & Gist (A lil' better workarounds are needed)
 delete_playlist(){
-    find_line=$(cat $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml | grep -n "$dir" | head -n1 | cut -f1 -d:) # This might be a dirty workaround to delete/stop maintaining the other playlists -_-
+    find_line=$(cat "$LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml" | grep -n "$dir" | head -n1 | cut -f1 -d:) # This might be a dirty workaround to delete/stop maintaining the other playlists -_-
     start_line=$(($find_line - 3)) # Start line as we grep with the dir, then minus the line by 3, which has the string 'cd ..''
     end_line=$(($find_line + 6)) # End line to delete upto it
-    if [[ "$(cat $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml | sed -n ${start_line}p)" == *'cd ..' ]]; then
-        sed -i "${start_line},${end_line}d" $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml
-        rm $LOCALDIR/TataSkyIPTV-Daily/code_samples/$(echo "$dir" | cut -c 1-6).json
-        cd $LOCALDIR/TataSkyIPTV-Daily/
+    if [[ "$(cat "$LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml" | sed -n ${start_line}p)" == *'cd ..' ]]; then
+        sed -i "${start_line},${end_line}d" "$LOCALDIR/TataSkyIPTV-Daily/.github/workflows/Tata-Sky-IPTV-Daily.yml"
+        rm "$LOCALDIR"/TataSkyIPTV-Daily/code_samples/$(echo "$dir" | cut -c 1-6).json
+        cd "$LOCALDIR"/TataSkyIPTV-Daily/
         git add .
         git commit -m "AutoUpdater: Stop maintaining $(echo "$dir" | cut -c 1-6) playlist" >> /dev/null 2>&1
         git push >> /dev/null 2>&1 || echo -e "{RED}Something went wrong while pushing with option 4"
@@ -383,7 +383,7 @@ delete_playlist(){
 # Save creds to .usercreds file for future use
 save_creds()
 {
-    printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ngit_token=\'$git_token\'\ngit_mail=\'$git_mail\'\ngit_id=\'$git_id\'\n" > $LOCALDIR/.usercreds
+    printf "sub_id=\'$sub_id\'\ntata_mobile=\'$tata_mobile\'\ngit_token=\'$git_token\'\ngit_mail=\'$git_mail\'\ngit_id=\'$git_id\'\n" > "$LOCALDIR"/.usercreds
 }
 
 # Ask direct login if .usercreds file exists
@@ -392,7 +392,7 @@ ask_direct_login()
     if [[ -f "$LOCALDIR/userDetails.json" ]]; then
         read -p "File userDetails.json already exists, Would you like to take all the required data from it? (y/n): " response;
         if [[ "$response" == 'y' ]]; then
-            if [[ -f "$LOCALDIR/.usercreds" ]]; then source $LOCALDIR/.usercreds; fi
+            if [[ -f "$LOCALDIR/.usercreds" ]]; then source "$LOCALDIR"/.usercreds; fi
             read -p " Enter your GitHub Token: " git_token;
             extract_git_vars;
             source source;
@@ -412,7 +412,7 @@ ask_direct_login()
     if [[ -f "$LOCALDIR/.usercreds" ]]; then
         read -p "File .usercreds already exists, Would you like to take all the inputs from it? (y/n): " response;
         if [[ "$response" == 'y' ]]; then
-            source $LOCALDIR/.usercreds
+            source "$LOCALDIR"/.usercreds
             check_if_repo_exists;
             if [[ "$selection" != '2' ]]; then
                 send_otp;
@@ -479,7 +479,7 @@ ask_user_to_select()
                     case $perform_operation in
                         'y') true; break;
                         ;;
-                        'n') true; rm $LOCALDIR/.usercreds; case_helper; break;
+                        'n') true; rm "$LOCALDIR"/.usercreds; case_helper; break;
                         ;;
                         *) printf '\nInvalid selection, Please try again\n'
                         ;;
@@ -565,7 +565,7 @@ ask_playlist_type()
 start()
 {
     if [[ "$1" != './main.sh' ]]; then clear; printf "${RED} Wrong usage, Run using:\n./main.sh${NC}\n"; exit 0; fi
-    if [[ ! -f ".itsme" ]]; then { git restore $LOCALDIR/.; git pull --rebase >> /dev/null 2>&1; curl -fsSL -H "Cache-Control: no-cache" 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh; exit & ./main.sh; } fi
+    if [[ ! -f ".itsme" ]]; then { git restore "$LOCALDIR"/.; git pull --rebase >> /dev/null 2>&1; curl -fsSL -H "Cache-Control: no-cache" 'https://gist.githubusercontent.com/Shra1V32/ad09427b52968b281d7705c137cfe262/raw/csum' | md5sum -c > /dev/null 2>&1; } || { printf "${RED} Something went wrong${NC}\nPlease check your internet connection or run this script again:\n\n${NC}bash <(curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/curl.sh')\n"; curl -s 'https://raw.githubusercontent.com/Shra1V32/TataSky-Playlist-AutoUpdater/main/main.sh' > main.sh; chmod 755 main.sh; exit & ./main.sh; } fi
     if [[ $(echo "$LOCALDIR" | rev | cut -c 1-28| rev  ) == 'TataSky-Playlist-AutoUpdater' || -f .itsme ]]; then
         if [[ $OSTYPE == 'linux-gnu'* ]]; then
             wait=$(tput setaf 57; echo -e "[◆]${NC}")
@@ -600,7 +600,7 @@ create_gist()
 
 dump_banner(){
     lines=$(tput cols)
-    { print_lines; print_spaces; print_lines; } > $LOCALDIR/dyn_banner
+    { print_lines; print_spaces; print_lines; } > "$LOCALDIR/dyn_banner"
 }
 
 
@@ -614,7 +614,7 @@ initiate_workflow_run(){
 }
 run_workflow(){
     sleep 1s
-    $LOCALDIR/dependencies/gh_workflow_run.exp || run_workflow
+    "$LOCALDIR"/dependencies/gh_workflow_run.exp || run_workflow
 }
 
 # Push based on certain conditions
@@ -686,7 +686,7 @@ print_info(){
         printf '\n\n'
         tput setaf 43; printf "Repo URL: ${NC}https://github.com/$git_id/TataSkyIPTV-Daily\n"
         tput setaf 43; printf "Playlist URL: ${NC}https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u \n"
-        tput setaf 43; printf "Playlist Expiry :${NC} $(date -d @$(cat $LOCALDIR/userDetails.json | cut -c 67-76))\n"
+        tput setaf 43; printf "Playlist Expiry :${NC} $(date -d @$(cat "$LOCALDIR"/userDetails.json | cut -c 67-76))\n"
         tput setaf 43; printf "\nYou need to run this script again before/at/after this date with Option 1 to keep your Playlist functional\n"
         tput setaf 43; printf "You can directly paste this URL in Tivimate/OTT Navigator\n"
         tput bold; printf "\n\nFor your Privacy Reasons, NEVER SHARE your GitHub Tokens, Tata Sky Account Credentials and Playlist URL TO ANYONE. \n"
@@ -707,14 +707,14 @@ main()
         cd TataSkyIPTV-Daily/;
         create_gist >> /dev/null 2>&1
         branch_name=$(echo "$dir" | cut -c 1-6)
-        cp -frp $LOCALDIR/userDetails.json code_samples/$branch_name.json
+        cp -frp "$LOCALDIR"/userDetails.json code_samples/$branch_name.json
         echo "$wait Logging in with your GitHub account..."
-        cd $LOCALDIR/TataSkyIPTV-Daily/.github/workflows/
+        cd "$LOCALDIR"/TataSkyIPTV-Daily/.github/workflows/
     elif [[ "$repo_exists" == 'true' && "$selection" == '4' ]]; then # Only this part should be executed when selection is '4'
         if [[ "$number_of_playlists_maintained" != '1' ]]; then # Don't pass to 'delete_which_playlist' function, if the number of playlist counts to '1', As we don't delete the main playlist using this anyway
             echo "$wait Cloning your personal repo..."
             git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1 || { rm -rf TataSkyIPTV-Daily; git clone https://$git_token@github.com/$git_id/TataSkyIPTV-Daily > /dev/null 2>&1; }
-            cd $LOCALDIR/TataSkyIPTV-Daily/code_samples;
+            cd "$LOCALDIR"/TataSkyIPTV-Daily/code_samples;
             printf '\n'
             echo "Number of playlists currently maintained: $number_of_playlists_maintained"
             delete_which_playlist;
@@ -726,12 +726,12 @@ main()
         echo "$wait Cloning Tata Sky IPTV Repo, This might take time depending on the network connection you have..."
         git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1 || { rm -rf Tata-Sky-IPTV; git clone https://github.com/ForceGT/Tata-Sky-IPTV >> /dev/null 2>&1; } 
         cd Tata-Sky-IPTV/code_samples/
-        cp -frp $LOCALDIR/userDetails.json .
+        cp -frp "$LOCALDIR"/userDetails.json .
         echo "$wait Logging in with your GitHub account..."
         cd ..
         create_gist >> /dev/null 2>&1
         take_vars_from_existing_repo;
-        mkdir -p $LOCALDIR/Tata-Sky-IPTV/.github/workflows; cd $LOCALDIR/Tata-Sky-IPTV/.github/workflows;
+        mkdir -p "$LOCALDIR"/Tata-Sky-IPTV/.github/workflows; cd "$LOCALDIR"/Tata-Sky-IPTV/.github/workflows;
     fi
     export dir=$dir
     export gist_url=$gist_url
@@ -742,20 +742,20 @@ main()
     if [[ "$playlist_type" == '2' ]]; then export playlist_args='--ott-navigator'; else true; fi
     if [[ "$repo_exists" == 'true' && "$selection" == '2' ]]; then
         if [[ "$(cat -e Tata-Sky-IPTV-Daily.yml | tail -n1 | rev | cut -c 1-1 | rev)" != '$' ]]; then printf '\n' >> Tata-Sky-IPTV-Daily.yml; fi
-        cat $LOCALDIR/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
+        cat "$LOCALDIR"/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
     elif [[ $selection == '1' && $multi_dirs == 'true' ]]; then
-        cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
+        cat "$LOCALDIR"/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
         for (( i=2; i<=$number_of_playlists_maintained; i++)); do  # Lists out all the available gist dirs found in the .yml file
             export dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github.com' | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
             export git_id=$git_id
             export git_token=$git_token
             export branch_name=$(echo "$dir" | cut -c 1-6)
             export gist_url="https://$git_token@gist.github.com/$dir"
-            curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/code_samples/$branch_name.json" > $LOCALDIR/Tata-Sky-IPTV/code_samples/$branch_name.json
-            cat $LOCALDIR/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
+            curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/code_samples/$branch_name.json" > "$LOCALDIR"/Tata-Sky-IPTV/code_samples/$branch_name.json
+            cat "$LOCALDIR"/dependencies/multi_playlist.sh | envsubst >> Tata-Sky-IPTV-Daily.yml
         done
     else
-        cat $LOCALDIR/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
+        cat "$LOCALDIR"/dependencies/Tata-Sky-IPTV-Daily.yml | envsubst > Tata-Sky-IPTV-Daily.yml
     fi
     dos2unix Tata-Sky-IPTV-Daily.yml >> /dev/null 2>&1
     cd ../..
@@ -768,7 +768,7 @@ main()
     initiate_workflow_run
     run_workflow >> /dev/null 2>&1
     print_info;
-    rm -rf $LOCALDIR/Tata-Sky-IPTV;
+    rm -rf "$LOCALDIR"/Tata-Sky-IPTV;
     echo "Press Enter to exit."; read junk;
     tput setaf init;
     menu_exit;
