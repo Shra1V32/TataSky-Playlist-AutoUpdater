@@ -175,8 +175,6 @@ read_git_token(){
 take_input()
 {
     read_git_token
-    extract_git_vars;
-    #fi
     take_tsky_vars;
     send_otp;
     save_creds; # Save creds after every inputs are verified
@@ -185,6 +183,14 @@ take_input()
 take_tsky_vars(){
     read -p " Enter your Tata Sky Subscriber ID: " sub_id;
     read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
+}
+
+validate_git_acc(){
+    { python3 validate_git.py "https://api.github.com/users/$git_id" >> /dev/null 2>&1;
+    #echo "$wait Validated GitHub Account, Everything fine";
+    } || { echo -e "${RED}You must run this script ONLY after 14 days of creation of GitHub account${NC}";
+    exit 1;
+    }
 }
 
 # Send OTP using the TSky creds
@@ -291,6 +297,7 @@ extract_git_vars()
 
     [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; }
     star_repo;
+    validate_git_acc
 }
 
 check_storage_access()
