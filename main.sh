@@ -73,7 +73,7 @@ check_login(){
         source "$LOCALDIR/.usercreds"
         printf "[0m[34mLOGIN STATUS  : "
         tput setaf 48; printf "True${NC}\n"
-        printf "[0m[34mSUBSCRIBER ID : [0m[32m$sub_id[0m\n"
+        printf "[0m[34mSUBSCRIBER ID : [0m[32m$(printf $sub_id | cut -c -5)$(printf '*****')[0m\n"
         #printf "[0m[34mRMN: [0m[32m$tata_mobile[0m\n"
         printf "[0m[34mPlaylist Type : " && print_playlist_type
         printf "[0m[34mAuthor        :[0m[32m https://github.com/Shra1V32\n${NC}"
@@ -186,11 +186,8 @@ take_tsky_vars(){
 }
 
 validate_git_acc(){
-    { python3 validate_git.py "https://api.github.com/users/$git_id" >> /dev/null 2>&1;
-    #echo "$wait Validated GitHub Account, Everything fine";
-    } || { echo -e "${RED}You must run this script ONLY after 14 days of creation of GitHub account${NC}";
-    exit 1;
-    }
+    python3 validate_git.py "https://api.github.com/users/$git_id" 2>/dev/null
+
 }
 
 # Send OTP using the TSky creds
