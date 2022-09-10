@@ -186,7 +186,7 @@ take_tsky_vars(){
 }
 
 validate_git_acc(){
-    python3 validate_git.py "https://api.github.com/users/$git_id" 2>/dev/null
+    python3 validate_git.py $git_id 2>/dev/null
 
 }
 
