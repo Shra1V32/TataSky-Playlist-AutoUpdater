@@ -59,7 +59,7 @@ case_banner(){
     printf "\033[H\033[2J"
     cat "$LOCALDIR/dyn_banner"
     check_login
-    printf '\n'
+    #printf '\n'
     set -x
 }
 
@@ -67,25 +67,55 @@ print_playlist_type(){
     [[ -f ~/.config/.ottnavigator ]] && { printf "[0m[32mOTT Navigator | Tivimate\n"; playlist_type='2'; } || { printf "[0m[32mKodi | Tivimate\n"; playlist_type='1'; }
 }
 
+update_tplay_token(){
+    if [[ $realtime_epoch -gt $epoch_expiry && $userConfirmedRelogin != 'false' ]]; then
+        printf "$wait Your Tata Play Playlist has been ${RED}expired${NC}"
+        printf "\nWould you like to login again to keep the playlist alive? (y/n): "
+        read -N 1 -s -r playlist_expiry_resp
+        if [[ $playlist_expiry_resp == 'y' ]]; then
+            userConfirmedRelogin='true'
+            mv "$LOCALDIR"/userDetails.json "$LOCALDIR"/.userDetails.json
+            check_login
+        elif [[ $playlist_expiry_resp == 'n' ]]; then
+            userConfirmedRelogin='false'
+            case_banner
+        else
+            echo "Invalid Selection, Please try again..."
+            update_tplay_token
+        fi
+    fi
+}
+
 check_login(){
     if [[ -f "$LOCALDIR/.usercreds" && -f "$LOCALDIR/userDetails.json" ]]; then
         isLoggedIn='true'
+        epoch_expiry="$(cat "$LOCALDIR"/userDetails.json | cut -c 67-76)"
+        realtime_epoch="$(curl -s 'http://worldtimeapi.org/api/timezone/Asia/Kolkata' | cut -c 247- | cut -f1 -d,)"
         source "$LOCALDIR/.usercreds"
-        printf "[0m[34mLOGIN STATUS  : "
+        printf "[0m[34mLOGIN STATUS   : "
         tput setaf 48; printf "True${NC}\n"
-        printf "[0m[34mSUBSCRIBER ID : [0m[32m$(printf $sub_id | cut -c -5)$(printf '*****')[0m\n"
-        #printf "[0m[34mRMN: [0m[32m$tata_mobile[0m\n"
-        printf "[0m[34mPlaylist Type : " && print_playlist_type
-        printf "[0m[34mAuthor        :[0m[32m https://github.com/Shra1V32\n${NC}"
+        printf "[0m[34mSUBSCRIBER ID  : [0m[32m$(printf $sub_id | cut -c -5)$(printf '*****')[0m\n"
+        printf "[0m[34mPlaylist Expiry: [0m[32m$(date -d @$epoch_expiry)[0m\n"
+        printf "[0m[34mPlaylist Type  : " && print_playlist_type
+        printf "[0m[34mAuthor         :[0m[32m https://github.com/Shra1V32\n${NC}"
+        printf '\n'
+        update_tplay_token
     elif [[ -f "$LOCALDIR/.usercreds" && ! -f "$LOCALDIR/userDetails.json" ]]; then
-        echo "$wait No userDetails.json found, Sending OTP to login..."
-        source "$LOCALDIR/.usercreds"
-        send_otp;
-        isLoggedIn='true'
-        case_banner
+        if [[ $userConfirmedRelogin == 'true' ]]; then
+            source "$LOCALDIR/.usercreds"
+            send_otp;
+            isLoggedIn='true'
+            case_banner
+        else
+            echo "$wait No userDetails.json found, Sending OTP to login..."
+            source "$LOCALDIR/.usercreds"
+            send_otp;
+            isLoggedIn='true'
+            case_banner
+        fi
     else
         isLoggedIn='false'
-        printf "[0m[34mLOGIN STATUS: "
+        printf "[0m[34mLOGIN STATUS : "
         printf "${RED}False${NC}\n"
         printf "[0m[34mMy GitHub Profile:[0m[32m https://github.com/Shra1V32\n${NC}"
     fi
@@ -167,8 +197,13 @@ menu_exit(){
 }
 
 read_git_token(){
-    read -p " Enter your GitHub Token: " git_token;
-    extract_git_vars;
+    if [[ -f "$LOCALDIR"/.usercreds ]]; then
+        . ./.usercreds
+        extract_git_vars
+    else
+        read -p " Enter your GitHub Token: " git_token;
+        extract_git_vars;
+    fi
 }
 
 # Take inputs
