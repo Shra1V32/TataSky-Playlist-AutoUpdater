@@ -714,13 +714,13 @@ print_user_playlists(){
 }
 
 count_channels(){
-    number_of_channels=$(curl -s "$1" | grep -o 'EXTINF' | wc -l) # Counts out number of channels in the playlist
+    number_of_channels=$(curl -s "https://gist.githubusercontent.com/$git_id/$1/raw/allChannelPlaylist.m3u" | grep -o 'EXTINF' | wc -l) # Counts out number of channels in the playlist
 }
 
 delete_which_playlist(){
     for (( i=1; i<=$number_of_playlists_maintained; i++)); do  # Lists out all the available gist dirs found in the .yml file
         dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep 'gist.github.com' | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
-        count_channels "https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u"
+        count_channels $dir
         echo "$i. $dir with $number_of_channels channels"
     done
     read -p "Select which playlist to delete: " deletion_num
