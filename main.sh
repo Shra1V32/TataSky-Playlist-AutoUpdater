@@ -127,10 +127,11 @@ case_helper(){
     printf "\n"
     echo "1) Login using RMN & OTP"
     echo "2) Change Playlist Type"
-    echo "3) Manage my M3U playlists"
-    echo "4) Build my Auto Updater"
-    echo "5) Logout"
-    echo "6) Exit"
+    echo "3) Show my currently maintained playlists"
+    echo "4) Manage my M3U playlists"
+    echo "5) Build my Auto Updater"
+    echo "6) Logout"
+    echo "7) Exit"
     echo " "
     printf "Make your selection: "
     while true; do
@@ -148,7 +149,13 @@ case_helper(){
             break;
             ;;
 
-            3) printf "\n"; case_banner; echo "$wait You've chosen to \"Manage my playlists\""
+            3) printf "\n"; case_banner;
+            print_user_playlists
+            menu_exit
+            break;
+            ;;
+
+            4) printf "\n"; case_banner; echo "$wait You've chosen to \"Manage my playlists\""
             if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
             source "$LOCALDIR/.usercreds"
             check_if_repo_exists
@@ -157,7 +164,7 @@ case_helper(){
             break;
             ;;
 
-            4) printf "\n"; case_banner; echo "$wait You've chosen to \"Build my Auto Updater\"";
+            5) printf "\n"; case_banner; echo "$wait You've chosen to \"Build my Auto Updater\"";
             if [[ "$isLoggedIn" == 'false' ]]; then case_banner; echo -e "${RED}Please Login first, Then select this option${NC}"; menu_exit; fi
             source "$LOCALDIR/.usercreds" && ls "$LOCALDIR/userDetails.json" > /dev/null 2>&1 || { echo  "Something went wrong"; exit 0; }
             check_if_repo_exists || true
@@ -165,7 +172,7 @@ case_helper(){
             break;
             ;;
 
-            5) printf '\n'; case_banner; echo "$wait You've chosen to Logout from TataSky & GitHub";
+            6) printf '\n'; case_banner; echo "$wait You've chosen to Logout from TataSky & GitHub";
             printf "Are you sure that you want to Logout from your Account? (y/n): "
             read -N 1 -s -r logout_status
             if [[ "$logout_status" == 'y' || "$logout_status" == 'Y' ]]; then
@@ -178,7 +185,7 @@ case_helper(){
             break;
             ;;
 
-            6) printf "\n"; menu_exit;
+            7) printf "\n"; menu_exit;
         esac
     done
         
@@ -694,6 +701,16 @@ check_dependencies(){
             dpkg -s $package > /dev/null 2>&1 || initiate_setup;
         done
     fi
+}
+
+print_user_playlists(){
+    number_of_playlists_maintained=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o "https://$git_token@gist.github" | wc -l)
+    for (( i=1; i<=$number_of_playlists_maintained; i++ )); do
+        dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep "$git_token@gist.github" | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
+        count_channels $dir
+        printf "$i) https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u with $number_of_channels channels\n"
+    done
+    printf '\n'
 }
 
 count_channels(){
