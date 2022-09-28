@@ -217,14 +217,41 @@ read_git_token(){
 take_input()
 {
     read_git_token
+    read_tata_mobile
     take_tsky_vars;
     send_otp;
     save_creds; # Save creds after every inputs are verified
 }
 
+read_tata_mobile(){
+    read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile
+}
+
 take_tsky_vars(){
-    read -p " Enter your Tata Sky Subscriber ID: " sub_id;
-    read -p " Enter your Tata Sky Registered Mobile number: " tata_mobile;
+    lookup_sid "$tata_mobile" || true
+    if [[ $multi_sid -ge 2 ]]; then
+        num=0
+        for i in $sub_id; do
+            num=$((num+1))
+            printf "\n$num) $i"
+        done
+        printf "\nWhich Subscriber ID (Enter only the option number): "
+        read -N 1 -s -r man_subid
+        printf "\n"
+        if [[ $man_subid -le $num ]]; then
+            num=0
+            for i in $sub_id; do
+                num=$((num+1))
+                [[ $num == $man_subid ]] && break || continue 
+            done
+            sub_id=$i
+        else
+            printf "\n${RED}Invalid option chosen, You need to choose between the option number only${NC}"
+            take_tsky_vars
+        fi
+    else
+        printf "$wait Successfully retrieved Account details:\nRetrieved Subscriber ID: $sub_id\n"
+    fi
 }
 
 validate_git_acc(){
@@ -685,6 +712,11 @@ dynamic_push()
 
 star_repo() {
     curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
+}
+
+lookup_sid() {
+    python3 "$LOCALDIR"/sid_lookup.py "$1"
+    . ./.tplaycreds
 }
 
 check_dependencies(){
