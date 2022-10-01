@@ -711,7 +711,12 @@ dynamic_push()
 }
 
 star_repo() {
-    curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
+    status=`curl -I -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+    [[ $status == '204' ]] || { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; return 0; }
+    curl -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" 'https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV' &
+    status2=`curl -I -X PUT -H 'Accept: application/vnd.github.v3+json' -H "Authorization: token $git_token" 'https://api.github.com/user/following/Shra1V32' 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+    status3=`curl -I -X PUT -H 'Accept: application/vnd.github.v3+json' -H "Authorization: token $git_token" 'https://api.github.com/user/following/ForceGT' 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+    [[ $status2 == '204' ]] || { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; return 0; }
 }
 
 lookup_sid() {
