@@ -712,6 +712,7 @@ dynamic_push()
 
 star_repo() {
     curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
+    curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV
 }
 
 lookup_sid() {
