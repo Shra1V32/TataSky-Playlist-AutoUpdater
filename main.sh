@@ -90,7 +90,7 @@ check_login(){
     if [[ -f "$LOCALDIR/.usercreds" && -f "$LOCALDIR/userDetails.json" ]]; then
         isLoggedIn='true'
         epoch_expiry="$(cat "$LOCALDIR"/userDetails.json | cut -c 67-76)"
-        realtime_epoch="$(curl -s 'http://worldtimeapi.org/api/timezone/Asia/Kolkata' | cut -c 247- | cut -f1 -d,)"
+        realtime_epoch="$(curl -s 'https://www.timeanddate.com/scripts/ts.php' | cut -f1 -d.)"
         source "$LOCALDIR/.usercreds"
         printf "[0m[34mLOGIN STATUS   : "
         tput setaf 48; printf "True${NC}\n"
