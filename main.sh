@@ -127,7 +127,7 @@ case_helper(){
     printf "\n"
     echo "1) Login using RMN & OTP"
     echo "2) Change Playlist Type"
-    echo "3) Show my currently maintained playlists"
+    echo "3) View my active playlists"
     echo "4) Manage my M3U playlists"
     echo "5) Build my Auto Updater"
     echo "6) Logout"
@@ -150,6 +150,7 @@ case_helper(){
             ;;
 
             3) printf "\n"; case_banner;
+            printf "$wait Fetching..."
             print_user_playlists
             menu_exit
             break;
@@ -344,26 +345,31 @@ take_vars()
 # Extract github variables from the tokens
 extract_git_vars()
 {
-    git_id=$(curl -s -H "Authorization: token $git_token" \
-    'https://api.github.com/user' \
-    | grep 'login' \
-    | sed 's/login//g' \
-    | tr -d '":, ')
-
-    if [ -z "$git_id" ]; then 
-        echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; read_git_token;
+    if [ -z "$git_token" ]; then
+        echo "" >>/dev/null 2>&1
+        #echo -e " ${RED}GitHub token cannot be left empty, Please try again."; read_git_token;
+    else
+        git_id=$(curl -s -H "Authorization: token $git_token" \
+        'https://api.github.com/user' \
+        | grep 'login' \
+        | sed 's/login//g' \
+        | tr -d '":, ')
+    
+        if [ -z "$git_id" ]; then 
+            echo -e "  ${RED}Wrong Github Token entered, Please try again.${NC}"; read_git_token;
+        fi
+    
+        git_mail=$(curl -s -H "Authorization: token $git_token" \
+        'https://api.github.com/user/emails' \
+        | grep 'email' \
+        | head -n1 \
+        | tr -d '", ' \
+        | sed 's/email://g')
+    
+        [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; }
+        star_repo;
+        validate_git_acc
     fi
-
-    git_mail=$(curl -s -H "Authorization: token $git_token" \
-    'https://api.github.com/user/emails' \
-    | grep 'email' \
-    | head -n1 \
-    | tr -d '", ' \
-    | sed 's/email://g')
-
-    [[ $git_mail == *'documentation'* ]] && { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; }
-    star_repo;
-    validate_git_acc
 }
 
 check_storage_access()
@@ -745,8 +751,10 @@ print_user_playlists(){
     for (( i=1; i<=$number_of_playlists_maintained; i++ )); do
         dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep "$git_token@gist.github" | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
         count_channels $dir
-        printf "$i) https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u with $number_of_channels channels\n"
+        playlist_str+="$(printf "$i) https://gist.githubusercontent.com/$git_id/$dir/raw/allChannelPlaylist.m3u with $number_of_channels channels\nLast Updated: $(date --date="$(curl -s https://gist.github.com/$git_id/$dir | grep 'time-ago' | cut -f2 -d\" | cut -f2 -d\")")\n")"
     done
+    case_banner
+    printf "$playlist_str"
     printf '\n'
 }
 
