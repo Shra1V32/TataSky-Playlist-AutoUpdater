@@ -346,8 +346,7 @@ take_vars()
 extract_git_vars()
 {
     if [ -z "$git_token" ]; then
-        echo "" >>/dev/null 2>&1
-        #echo -e " ${RED}GitHub token cannot be left empty, Please try again."; read_git_token;
+        echo -e " ${RED}GitHub token cannot be left empty, Please try again."; read_git_token;
     else
         git_id=$(curl -s -H "Authorization: token $git_token" \
         'https://api.github.com/user' \
@@ -747,6 +746,7 @@ check_dependencies(){
 }
 
 print_user_playlists(){
+    playlist_str=""
     number_of_playlists_maintained=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep -o "https://$git_token@gist.github" | wc -l)
     for (( i=1; i<=$number_of_playlists_maintained; i++ )); do
         dir=$(curl -s "https://$git_token@raw.githubusercontent.com/$git_id/TataSkyIPTV-Daily/main/.github/workflows/Tata-Sky-IPTV-Daily.yml" |grep "$git_token@gist.github" | head -n$i | tail -n1 |rev | cut -f1 -d/ | rev)
