@@ -866,6 +866,7 @@ main()
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
     echo "$wait Pushing your personal private repository to your account..."
     dynamic_push >> /dev/null 2>&1 || { echo "Something went wrong while pushing.."; menu_exit; }
+    gh repo set-default >> /dev/null 2>&1
     echo "$wait Running Workflow..."
     initiate_workflow_run
     run_workflow >> /dev/null 2>&1
