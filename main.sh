@@ -423,8 +423,7 @@ initiate_setup()
             echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
             { apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes; }
-            pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
-            pip install --upgrade pip
+            pkg install git gh ncurses-utils expect python python-pip gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             echo "Installation done successfully!"
         else
