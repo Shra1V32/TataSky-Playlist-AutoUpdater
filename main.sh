@@ -449,7 +449,7 @@ delete_playlist(){
         cd "$LOCALDIR"/TataSkyIPTV-Daily/
         git add .
         git commit -m "AutoUpdater: Stop maintaining $(echo "$dir" | cut -c 1-6) playlist" >> /dev/null 2>&1
-        git push >> /dev/null 2>&1 || echo -e "{RED}Something went wrong while pushing with option 4"
+        git push >> /dev/null 2>&1 || echo -e "${RED}Something went wrong while pushing with option 4"
         gh gist delete "$dir" || echo "Looks like playlist has been deleted already" # More checks needed, Will be implemented in near future
     else
         echo "$error Only playlists sideloaded among the main playlist can be deleted, Main playlist cannot be deleted"
@@ -864,7 +864,7 @@ main()
     git remote remove origin
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
     echo "$wait Pushing your personal private repository to your account..."
-    dynamic_push >> /dev/null 2>&1 || { echo "Something went wrong while pushing.."; menu_exit; }
+    dynamic_push >> /dev/null 2>&1 || { printf "Something went wrong while pushing, Delete your private repo & run with this option again\n"; menu_exit; }
     gh repo set-default >> /dev/null 2>&1 || true
     echo "$wait Running Workflow..."
     initiate_workflow_run
@@ -883,5 +883,6 @@ dump_banner
 trap dump_banner WINCH
 set -x
 echo "Loading..."
+ping -c 1 raw.githubusercontent.com >> /dev/null 2>&1 || { echo -e "${RED} Ping to GitHub Content server failed, Change DNS or contact in Telegram group.${NC}"; exit 0; }
 start "$0";
 case_helper
