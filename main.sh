@@ -405,7 +405,7 @@ initiate_setup()
         printf "Please Enter your password to proceed with the setup: "
         sudo echo '' > /dev/null 2>&1
         sudo apt update
-        sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
+        sudo apt install python3 expect iputils-ping dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
         pip install --upgrade pip
         pip3 install requests
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
