@@ -9,7 +9,6 @@ NC='\033[0m'
 if [[ $OSTYPE == 'linux-android'* && $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge "117" ]]; then
     dpkg -s git >>/dev/null 2>&1 || pkg install git -y
     git clone https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater || {
-        rm -rf TataSky-Playlist-AutoUpdater
         FILES='.tplaycreds .usercreds userDetails.json'
         for i in $FILES; do
             cp -frp "TataSky-Playlist-AutoUpdater/$i" .
@@ -26,7 +25,6 @@ if [[ $OSTYPE == 'linux-android'* && $(echo "$TERMUX_VERSION" | cut -c 3-5) -ge 
 elif [[ $OSTYPE == 'linux-gnu'* ]]; then
     dpkg -s git >>/dev/null 2>&1 || sudo apt install git -y
     git clone https://github.com/Shra1V32/TataSky-Playlist-AutoUpdater || {
-        rm -rf TataSky-Playlist-AutoUpdater
         FILES='.tplaycreds .usercreds userDetails.json'
         for i in $FILES; do
             cp -frp "TataSky-Playlist-AutoUpdater/$i" .
