@@ -405,7 +405,7 @@ initiate_setup()
         printf "Please Enter your password to proceed with the setup: "
         sudo echo '' > /dev/null 2>&1
         sudo apt update
-        sudo apt install python3 expect dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
+        sudo apt install python3 expect iputils-ping dos2unix python3-pip perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
         pip install --upgrade pip
         pip3 install requests
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -423,8 +423,7 @@ initiate_setup()
             echo -e "${NC}"
             echo "$wait Please wait while the installation takes place..."
             { apt-get update &&      apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes &&     apt-get -o Dpkg::Options::="--force-confold" dist-upgrade -q -y --force-yes; }
-            pkg install git gh ncurses-utils expect python gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
-            pip install --upgrade pip
+            pkg install git gh ncurses-utils expect python python-pip gettext dos2unix perl -y || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             pip install requests || { echo -e "${RED}Something went wrong, Try running the script again.${NC}"; exit 0; }
             echo "Installation done successfully!"
         else
@@ -450,7 +449,7 @@ delete_playlist(){
         cd "$LOCALDIR"/TataSkyIPTV-Daily/
         git add .
         git commit -m "AutoUpdater: Stop maintaining $(echo "$dir" | cut -c 1-6) playlist" >> /dev/null 2>&1
-        git push >> /dev/null 2>&1 || echo -e "{RED}Something went wrong while pushing with option 4"
+        git push >> /dev/null 2>&1 || echo -e "${RED}Something went wrong while pushing with option 4"
         gh gist delete "$dir" || echo "Looks like playlist has been deleted already" # More checks needed, Will be implemented in near future
     else
         echo "$error Only playlists sideloaded among the main playlist can be deleted, Main playlist cannot be deleted"
@@ -716,8 +715,12 @@ dynamic_push()
 }
 
 star_repo() {
-    curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater
-    curl   -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV
+    status=`curl -I -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" https://api.github.com/user/starred/Shra1V32/TataSky-Playlist-AutoUpdater 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+    [[ $status == '204' ]] || { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; return 0; }
+    curl -X PUT   -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $git_token" 'https://api.github.com/user/starred/ForceGT/Tata-Sky-IPTV' &
+    status2=`curl -I -X PUT -H 'Accept: application/vnd.github.v3+json' -H "Authorization: token $git_token" 'https://api.github.com/user/following/Shra1V32' 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+    status3=`curl -I -X PUT -H 'Accept: application/vnd.github.v3+json' -H "Authorization: token $git_token" 'https://api.github.com/user/following/ForceGT' 2>/dev/null | head -n 1 | cut -d$' ' -f2`
+    [[ $status2 == '204' ]] || { echo -e "${RED}Please make sure that you've gave all the necessary permissions for the GitHub Token.${NC}"; menu_exit; return 0; }
 }
 
 lookup_sid() {
@@ -861,7 +864,7 @@ main()
     git remote remove origin
     git remote add origin "https://$git_token@github.com/$git_id/TataSkyIPTV-Daily.git" >> /dev/null 2>&1;
     echo "$wait Pushing your personal private repository to your account..."
-    dynamic_push >> /dev/null 2>&1 || { echo "Something went wrong while pushing.."; menu_exit; }
+    dynamic_push >> /dev/null 2>&1 || { printf "Something went wrong while pushing, Delete your private repo & run with this option again\n"; menu_exit; }
     gh repo set-default >> /dev/null 2>&1 || true
     echo "$wait Running Workflow..."
     initiate_workflow_run
@@ -880,5 +883,6 @@ dump_banner
 trap dump_banner WINCH
 set -x
 echo "Loading..."
+ping -c 1 raw.githubusercontent.com >> /dev/null 2>&1 || { echo -e "${RED} Ping to GitHub Content server failed, Change DNS or contact in Telegram group.${NC}"; exit 0; }
 start "$0";
 case_helper
